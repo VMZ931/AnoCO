@@ -9,8 +9,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=3" />
-    <script src="app.js?v=2" defer></script>
+    <link rel="stylesheet" href="styles.css?v=4" />
+    <script src="call-config.js?v=1" defer></script>
+    <script src="app.js?v=3" defer></script>
   </head>
   <body>
     <header class="site-header">
@@ -32,7 +33,7 @@
           <h1 id="hero-title">You don't have to carry it <em>alone.</em></h1>
           <p class="hero-intro">Stress, anxious thoughts, low mood, or relationship worries can be a lot to hold. AnoCo helps Grade 12 students find words for what's going on and think about a next step.</p>
           <a class="primary-link" href="#topics">Explore support topics <span aria-hidden="true">&#8594;</span></a>
-          <p class="hero-note"><span aria-hidden="true">&#10003;</span> No account or name needed <span class="note-divider" aria-hidden="true"></span> Not a monitored service</p>
+          <p class="hero-note"><span aria-hidden="true">&#10003;</span> No account or name needed <span class="note-divider" aria-hidden="true"></span> Counselor calls when available</p>
         </div>
         <figure class="hero-photo">
           <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1100&q=85" alt="Students spending time together in a calm campus setting" />
@@ -73,14 +74,21 @@
           <p>Use this space to shape a question you might bring to a trusted adult or school counselor.</p>
           <div class="privacy-note">
             <span class="privacy-icon" aria-hidden="true">&#9673;</span>
-            <div><strong>This demo is not monitored.</strong><p>What you type is not sent, saved, or seen by a counselor. Please leave out names, your school, and other identifying details.</p></div>
+            <div><strong>Your written draft is not monitored.</strong><p>What you type is not sent, saved, or seen by a counselor. Please leave out names, your school, and other identifying details.</p></div>
           </div>
-          <div class="call-preview">
+          <div class="call-preview" aria-labelledby="call-title">
             <span class="call-icon" aria-hidden="true">&#9742;</span>
-            <div>
-              <strong>Voice call via Messenger</strong>
-              <p>Open this conversation in Messenger, then start a voice call there. Messenger sign-in is required; review its privacy settings before sharing personal details.</p>
-              <a class="call-button" href="https://m.me/earljad.delacruz" target="_blank" rel="noopener noreferrer">Open Messenger <span aria-hidden="true">&#8599;</span></a>
+            <div class="call-content">
+              <strong id="call-title">Talk with a counselor</strong>
+              <p>Audio-only calls happen here when a counselor is available. Your voice is sent to LiveKit to connect the call; AnoCo does not record calls.</p>
+              <button class="call-button" id="call-start" type="button" disabled>Checking availability...</button>
+              <p class="call-status" id="call-status" role="status" aria-live="polite">Live calls are not configured yet. Do not enter urgent or identifying information here.</p>
+              <div class="call-controls" id="call-controls" hidden>
+                <button class="call-mute" id="call-mute" type="button">Mute microphone</button>
+                <button class="call-end" id="call-end" type="button">End call</button>
+              </div>
+              <div class="remote-audio" id="remote-audio" aria-hidden="true"></div>
+              <a class="call-fallback" href="https://m.me/earljad.delacruz" target="_blank" rel="noopener noreferrer">Open Messenger instead <span aria-hidden="true">&#8599;</span></a>
             </div>
           </div>
         </div>
@@ -103,7 +111,7 @@
           <p class="form-result" id="form-result" role="status" aria-live="polite" hidden></p>
           <aside class="urgent-note" aria-labelledby="urgent-title">
             <strong id="urgent-title">Need help urgently?</strong>
-            <p>If you may be in immediate danger or might hurt yourself or someone else, tell a trusted adult now or contact local emergency services. AnoCo is not monitored and cannot provide crisis support.</p>
+            <p>If you may be in immediate danger or might hurt yourself or someone else, tell a trusted adult now or contact local emergency services. AnoCo calls may be unavailable and are not crisis support.</p>
           </aside>
         </form>
       </section>
@@ -112,7 +120,7 @@
     <footer class="site-footer">
       <a class="brand footer-brand" href="#home" aria-label="AnoCo home"><span class="brand-mark" aria-hidden="true">A</span><span>AnoCo<span class="brand-period">.</span></span></a>
       <p>A supportive starting point for student mental wellbeing.</p>
-      <span class="footer-grade">STUDENT WELLBEING</span>
+      <a class="footer-grade" href="staff.html">COUNSELOR SIGN-IN</a>
     </footer>
   </body>
 </html>

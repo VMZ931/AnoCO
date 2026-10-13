@@ -1,0 +1,1 @@
+window.ANOCO_CALL_API = '';

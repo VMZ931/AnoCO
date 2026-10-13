@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f8faf6" />
+    <title>AnoCo | Counselor Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css?v=4" />
+    <script src="https://accounts.google.com/gsi/client" defer></script>
+    <script src="call-config.js?v=1" defer></script>
+    <script src="staff.js?v=2" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="AnoCo home">
+        <span class="brand-mark" aria-hidden="true">A</span>
+        <span>AnoCo<span class="brand-period">.</span></span>
+      </a>
+      <a class="header-cta" href="index.html">Student support <span aria-hidden="true">&#8599;</span></a>
+    </header>
+
+    <main class="staff-main">
+      <p class="eyebrow">COUNSELOR CONSOLE</p>
+      <h1>Student call queue</h1>
+      <p class="staff-intro">Sign in with an approved school counselor account to receive audio-only student calls.</p>
+
+      <aside class="staff-safety">
+        <strong>Use your approved staff account only.</strong>
+        <p>Calls are not recorded by AnoCo. LiveKit processes audio to connect participants. Follow your school's safeguarding and crisis response procedures.</p>
+      </aside>
+
+      <section class="staff-login" id="staff-login" aria-labelledby="sign-in-title">
+        <h2 id="sign-in-title">Counselor sign-in</h2>
+        <div id="google-sign-in"></div>
+        <p class="staff-status" id="staff-status" role="status" aria-live="polite">Checking the call service...</p>
+      </section>
+
+      <section class="staff-dashboard" id="staff-dashboard" aria-labelledby="queue-title" hidden>
+        <div class="queue-heading">
+          <div>
+            <p class="eyebrow">LIVE QUEUE</p>
+            <h2 id="queue-title">Waiting students</h2>
+          </div>
+          <button class="sign-out-button" id="staff-sign-out" type="button">Sign out</button>
+        </div>
+        <p class="staff-status" id="queue-status" role="status" aria-live="polite">You're online for calls.</p>
+        <ul class="call-queue" id="call-queue" aria-label="Students waiting for a call"></ul>
+
+        <div class="staff-active-call" id="staff-active-call" hidden>
+          <strong id="active-call-status">Connecting to the student...</strong>
+          <div class="call-controls">
+            <button class="call-mute" id="staff-call-mute" type="button">Mute microphone</button>
+            <button class="call-end" id="staff-call-end" type="button">End call</button>
+          </div>
+          <div class="remote-audio" id="staff-remote-audio" aria-hidden="true"></div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
