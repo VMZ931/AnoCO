@@ -23,5 +23,5 @@ form.addEventListener('submit', (event) => {
 
   if (!form.reportValidity()) return;
 
-  result.textContent = 'Thanks for writing this down. This is a demo, so your question was not sent or saved. Connect a secure service before collecting real submissions.';
+  result.textContent = 'This was only a local preview. Nothing was sent or saved, and no counselor will see it. Consider sharing your question with a trusted adult or school counselor.';
 });
