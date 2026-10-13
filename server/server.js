@@ -5,7 +5,7 @@ import express from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { OAuth2Client } from 'google-auth-library';
 import helmet from 'helmet';
-import { AccessToken, RoomServiceClient, VideoGrant } from 'livekit-server-sdk';
+import { AccessToken, RoomServiceClient } from 'livekit-server-sdk';
 
 const app = express();
 const port = Number(process.env.PORT || 8787);
@@ -117,14 +117,14 @@ async function createJoinToken({ identity, roomName, canPublish }) {
     name: canPublish ? 'Student' : 'Counselor',
     ttl: '10m',
   });
-  token.addGrant(new VideoGrant({
+  token.addGrant({
     roomJoin: true,
     room: roomName,
     canPublish,
     canSubscribe: true,
     canPublishData: false,
     canPublishSources: ['microphone'],
-  }));
+  });
   return token.toJwt();
 }
 
@@ -192,8 +192,8 @@ app.post('/api/calls/:callId/end', async (req, res) => {
   return res.json({ status: session.status });
 });
 
-app.post('/api/staff/presence', requireCounselor, (req, res) => {
-  counselors.set(req.counselorId, Date.now());
+app.post('/api/staff/presence', requireCounselor, (_req, res) => {
+  counselors.set(_req.counselorId, Date.now());
   return res.json({ available: true });
 });
 
