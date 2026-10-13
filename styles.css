@@ -102,8 +102,9 @@ h2 { margin: 0; font-size: 30px; font-weight: 600; line-height: 1.2; }
 .call-icon { color: var(--green); font-size: 19px; line-height: 1; }
 .call-preview strong { font-size: 12px; }
 .call-preview p { margin: 5px 0 10px; color: var(--muted); font-size: 11px; line-height: 1.65; }
-.call-button { padding: 8px 10px; border: 1px solid #cbd6cd; border-radius: 3px; color: #637168; background: #e9eee8; font-size: 11px; font-weight: 600; }
-.call-button:disabled { cursor: not-allowed; opacity: .85; }
+.call-button { display: inline-flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--green); border-radius: 3px; color: white; background: var(--green); font-size: 11px; font-weight: 600; transition: background .18s ease; }
+.call-button:hover { background: var(--green-deep); }
+.call-button span { color: #c9e676; font-size: 14px; }
 .consultation-form { display: flex; flex-direction: column; }
 .consultation-form label { margin: 0 0 8px; font-size: 12px; font-weight: 700; }
 .consultation-form select, .consultation-form textarea, .consultation-form input { width: 100%; border: 1px solid #cedbd0; border-radius: 3px; color: var(--ink); background: rgba(255,255,255,.75); font-size: 13px; }

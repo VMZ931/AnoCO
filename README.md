@@ -17,6 +17,6 @@ Open `index.html` in a browser. This is a dependency-free static site; no instal
 
 This is not a counseling or crisis service. The form is intentionally frontend-only: its preview does not send, store, or share what a student writes, and no counselor will see it. Do not use the demo to collect real student information. Before offering real consultations, establish a documented privacy and safeguarding process and connect an appropriately secured intake system staffed by qualified people. For immediate danger, the page directs students to a trusted adult or local emergency services.
 
-In-site voice calls are not active yet. They require an approved calling provider, a secure backend for call setup, and staffed counselor availability; GitHub Pages only hosts the static frontend.
+The voice-call option opens the provided Messenger conversation; students sign in and start the call in Messenger. Calls are not embedded in AnoCo, and Messenger's own privacy practices apply to what students share there. Confirm the account is managed by the intended support team before promoting the link.
 
 The hero photograph and web fonts load from external providers and require an internet connection; the layout and form otherwise work locally.
