@@ -1,1 +1,1 @@
-window.ANOCO_CALL_API = '';
+window.ANOCO_CALL_API = 'https://anoco-call-service.onrender.com';
