@@ -25,9 +25,9 @@ Calls are not ready for real student use until the school has approved the provi
 
 1. Create an approved LiveKit Cloud project and keep its API secret private.
 2. In Google Cloud, create a Web OAuth client for `https://vmz931.github.io`; configure the school's Workspace domain and the exact counselor email allowlist.
-3. Connect this repository to Render using `render.yaml`. Set `GOOGLE_WORKSPACE_DOMAIN`, `GOOGLE_CLIENT_ID`, `COUNSELOR_EMAILS`, `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, and `ALLOWED_ORIGINS` in the Render dashboard. Never commit secret values.
-4. After Render provides the API URL, set `window.ANOCO_CALL_API` in `call-config.js` to that URL and push the change to `main` to publish it.
-5. Counselors open `/AnoCO/staff.html`, sign in with an allowlisted school account, and stay online to receive calls. Verify audio, availability, and the hang-up flow using consenting staff/test accounts before inviting students.
+3. Connect this repository to Render using `render.yaml`. Set `GOOGLE_WORKSPACE_DOMAIN`, `GOOGLE_CLIENT_ID`, `COUNSELOR_EMAILS`, `COUNSELOR_ADMIN_EMAILS`, `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, and `ALLOWED_ORIGINS` in the Render dashboard. `COUNSELOR_ADMIN_EMAILS` is a comma-separated list of trusted school staff who can add counselors in the console; these accounts can also receive calls. Counselor sign-in and roster management can work before LiveKit is configured; audio calls remain unavailable until all call settings are present. Never commit secret values.
+4. `call-config.js` already points to the current Render API. If you replace the service, update `window.ANOCO_CALL_API` and push the change to `main`.
+5. Counselors open `/AnoCO/staff.html`, sign in with an allowlisted school account, and stay online to receive calls. A configured counselor administrator can add school-domain accounts from the console. Added accounts are held only in server memory and are lost on service restart; add them to `COUNSELOR_EMAILS` in Render to keep them across restarts. Verify audio, availability, and the hang-up flow using consenting staff/test accounts before inviting students.
 
 The call queue and counselor presence currently live in one server process and disappear on restart; don't use this scaffold for a production student service until durable operational design, provider/privacy review, consent, retention, safeguarding, and incident response are approved.
 

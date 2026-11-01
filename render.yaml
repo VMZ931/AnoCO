@@ -13,6 +13,8 @@ services:
         sync: false
       - key: COUNSELOR_EMAILS
         sync: false
+      - key: COUNSELOR_ADMIN_EMAILS
+        sync: false
       - key: LIVEKIT_URL
         sync: false
       - key: LIVEKIT_API_KEY

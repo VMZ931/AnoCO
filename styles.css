@@ -147,6 +147,17 @@ h2 { margin: 0; font-size: 30px; font-weight: 600; line-height: 1.2; }
 .queue-heading .eyebrow { margin-bottom: 7px; }
 .queue-heading h2 { margin: 0; }
 .sign-out-button { padding: 8px 11px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink); background: white; font-size: 11px; font-weight: 600; cursor: pointer; }
+.counselor-management { margin-top: 28px; padding: 18px; border: 1px solid var(--line); background: white; }
+.counselor-management[hidden] { display: none !important; }
+.counselor-management h2 { margin: 0 0 8px; font-size: 18px; }
+.counselor-management > p:not(.staff-status) { max-width: 650px; margin: 0 0 15px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.counselor-form label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 600; }
+.counselor-form-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.counselor-form input { flex: 1 1 240px; min-height: 36px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink); background: white; font: inherit; }
+.counselor-form input:focus-visible, .counselor-form button:focus-visible { outline: 3px solid #d5e6d3; outline-offset: 2px; }
+.counselor-form button:disabled { cursor: wait; opacity: .68; }
+.counselor-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.counselor-list li { padding: 6px 9px; border-radius: 3px; color: var(--green-deep); background: #eaf2e9; font-size: 11px; overflow-wrap: anywhere; }
 .call-queue { margin: 18px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
 .queue-item { display: flex; align-items: center; justify-content: space-between; gap: 18px; min-height: 72px; padding: 12px 4px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12px; }
 .queue-empty { padding: 19px 4px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12px; }

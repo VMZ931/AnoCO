@@ -8,9 +8,15 @@ const queueList = document.querySelector('#call-queue');
 const activeCallPanel = document.querySelector('#staff-active-call');
 const activeCallStatus = document.querySelector('#active-call-status');
 const remoteAudio = document.querySelector('#staff-remote-audio');
+const counselorManagement = document.querySelector('#counselor-management');
+const counselorForm = document.querySelector('#counselor-form');
+const counselorEmail = document.querySelector('#counselor-email');
+const counselorManagementStatus = document.querySelector('#counselor-management-status');
+const counselorList = document.querySelector('#counselor-list');
 let googleCredential = '';
 let activeCallId = null;
 let activeRoom = null;
+let callServiceReady = false;
 let queueTimer = null;
 let presenceTimer = null;
 let muted = false;
@@ -34,7 +40,24 @@ function setStaffStatus(message) {
   statusText.textContent = message;
 }
 
+async function refreshCounselors() {
+  const { counselors } = await api('/staff/counselors');
+  counselorList.replaceChildren();
+  for (const email of counselors) {
+    const item = document.createElement('li');
+    item.textContent = email;
+    counselorList.append(item);
+  }
+}
+
+async function loadCounselorManagement() {
+  const { canManageCounselors } = await api('/staff/session');
+  counselorManagement.hidden = !canManageCounselors;
+  if (canManageCounselors) await refreshCounselors();
+}
+
 async function sendPresence() {
+  if (!callServiceReady) return;
   try {
     await api('/staff/presence', { method: 'POST' });
     queueStatus.textContent = activeCallId ? "You're online and speaking with a student." : "You're online for calls.";
@@ -45,6 +68,15 @@ async function sendPresence() {
 
 async function refreshQueue() {
   if (!googleCredential) return;
+  if (!callServiceReady) {
+    queueStatus.textContent = 'The call queue is unavailable until the LiveKit call service is configured.';
+    queueList.replaceChildren();
+    const unavailable = document.createElement('li');
+    unavailable.className = 'queue-empty';
+    unavailable.textContent = 'Audio calls are not configured.';
+    queueList.append(unavailable);
+    return;
+  }
   try {
     const { calls } = await api('/staff/calls');
     queueList.replaceChildren();
@@ -132,10 +164,20 @@ async function endCall(message = 'The call has ended.') {
 async function handleGoogleCredential(response) {
   googleCredential = response.credential;
   try {
-    await api('/staff/presence', { method: 'POST' });
+    await api(callServiceReady ? '/staff/presence' : '/staff/session', {
+      method: callServiceReady ? 'POST' : 'GET',
+    });
     loginSection.hidden = true;
     dashboard.hidden = false;
     setStaffStatus('Counselor sign-in verified.');
+    if (!callServiceReady) {
+      queueStatus.textContent = 'The call queue is unavailable until the LiveKit call service is configured.';
+    }
+    try {
+      await loadCounselorManagement();
+    } catch (error) {
+      counselorManagementStatus.textContent = error.message;
+    }
     await refreshQueue();
     queueTimer = window.setInterval(refreshQueue, 4000);
     presenceTimer = window.setInterval(sendPresence, 10000);
@@ -155,10 +197,11 @@ async function initializeConsole() {
   try {
     const config = await fetch(`${apiBase}/api/config`).then((response) => response.json());
     if (!config.configured || !config.googleClientId) {
-      setStaffStatus('Call service settings are incomplete.');
+      setStaffStatus('Counselor sign-in settings are incomplete.');
       signInButton.hidden = true;
       return;
     }
+    callServiceReady = Boolean(config.callConfigured);
 
     if (!window.google?.accounts?.id) {
       setStaffStatus('Google sign-in could not load. Refresh the page to try again.');
@@ -178,12 +221,40 @@ async function initializeConsole() {
       text: 'signin_with',
       shape: 'rectangular',
     });
-    setStaffStatus('Sign in using your approved school counselor account.');
+    setStaffStatus(callServiceReady
+      ? 'Sign in using your approved school counselor account.'
+      : 'Sign in to manage counselor access. Audio calls are not configured yet.');
   } catch {
     setStaffStatus('The call service could not be reached.');
     signInButton.hidden = true;
   }
 }
+
+counselorForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (!counselorForm.reportValidity()) return;
+
+  const button = counselorForm.querySelector('button[type="submit"]');
+  button.disabled = true;
+  counselorManagementStatus.textContent = 'Adding counselor...';
+  try {
+    const { email } = await api('/staff/counselors', {
+      method: 'POST',
+      body: JSON.stringify({ email: counselorEmail.value }),
+    });
+    counselorForm.reset();
+    counselorManagementStatus.textContent = `${email} can now sign in. This addition will be lost if the call service restarts.`;
+    try {
+      await refreshCounselors();
+    } catch (error) {
+      counselorManagementStatus.textContent = `${email} was added, but the counselor list could not be refreshed: ${error.message}`;
+    }
+  } catch (error) {
+    counselorManagementStatus.textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+});
 
 document.querySelector('#staff-call-end').addEventListener('click', () => endCall());
 document.querySelector('#staff-call-mute').addEventListener('click', async (event) => {
@@ -204,6 +275,9 @@ document.querySelector('#staff-sign-out').addEventListener('click', async () => 
   window.clearInterval(presenceTimer);
   googleCredential = '';
   dashboard.hidden = true;
+  counselorManagement.hidden = true;
+  counselorList.replaceChildren();
+  counselorManagementStatus.textContent = '';
   loginSection.hidden = false;
   signInButton.replaceChildren();
   setStaffStatus('Sign in again when you are ready to receive calls.');
