@@ -9,12 +9,17 @@ import { AccessToken, RoomServiceClient } from 'livekit-server-sdk';
 
 const app = express();
 const port = Number(process.env.PORT || 8787);
-const workspaceDomain = (process.env.GOOGLE_WORKSPACE_DOMAIN || '').toLowerCase();
+const workspaceDomain = (process.env.GOOGLE_WORKSPACE_DOMAIN || '').trim().toLowerCase();
 const googleClientId = process.env.GOOGLE_CLIENT_ID || '';
 const counselorEmails = new Set((process.env.COUNSELOR_EMAILS || '')
   .split(',')
   .map((email) => email.trim().toLowerCase())
   .filter(Boolean));
+const counselorAdminEmails = new Set((process.env.COUNSELOR_ADMIN_EMAILS || '')
+  .split(',')
+  .map((email) => email.trim().toLowerCase())
+  .filter(Boolean));
+for (const email of counselorAdminEmails) counselorEmails.add(email);
 const liveKitUrl = process.env.LIVEKIT_URL || '';
 const liveKitApiKey = process.env.LIVEKIT_API_KEY || '';
 const liveKitApiSecret = process.env.LIVEKIT_API_SECRET || '';
@@ -52,9 +57,13 @@ const studentCallLimiter = rateLimit({
   message: { error: 'Too many call requests. Please wait before trying again.' },
 });
 
+function counselorSignInReady() {
+  return Boolean(workspaceDomain && googleClientId && counselorEmails.size > 0 && allowedOrigins.length > 0);
+}
+
 function serviceReady() {
   return Boolean(
-    workspaceDomain && googleClientId && counselorEmails.size > 0 && liveKitUrl && liveKitApiKey && liveKitApiSecret && roomService && allowedOrigins.length > 0,
+    counselorSignInReady() && liveKitUrl && liveKitApiKey && liveKitApiSecret && roomService,
   );
 }
 
@@ -86,10 +95,20 @@ async function requireCounselor(req, res, next) {
       return res.status(403).json({ error: 'Use an approved school counselor account.' });
     }
     req.counselorId = claims.sub;
+    req.counselorEmail = claims.email.toLowerCase();
     return next();
   } catch {
     return res.status(401).json({ error: 'Counselor sign-in could not be verified.' });
   }
+}
+
+function requireCounselorAdmin(req, res, next) {
+  return requireCounselor(req, res, () => {
+    if (!counselorAdminEmails.has(req.counselorEmail)) {
+      return res.status(403).json({ error: 'Counselor administrator access is required.' });
+    }
+    return next();
+  });
 }
 
 function currentCounselorCount() {
@@ -140,11 +159,16 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.get('/api/config', (_req, res) => {
-  res.json({ configured: serviceReady(), googleClientId });
+  res.json({
+    configured: counselorSignInReady(),
+    callConfigured: serviceReady(),
+    googleClientId,
+  });
 });
 
 app.get('/api/availability', (_req, res) => {
-  res.json({ available: serviceReady() && currentCounselorCount() > 0 });
+  const configured = serviceReady();
+  res.json({ configured, available: configured && currentCounselorCount() > 0 });
 });
 
 app.post('/api/calls', studentCallLimiter, async (_req, res) => {
@@ -195,6 +219,26 @@ app.post('/api/calls/:callId/end', async (req, res) => {
 app.post('/api/staff/presence', requireCounselor, (_req, res) => {
   counselors.set(_req.counselorId, Date.now());
   return res.json({ available: true });
+});
+
+app.get('/api/staff/session', requireCounselor, (req, res) => {
+  return res.json({ canManageCounselors: counselorAdminEmails.has(req.counselorEmail) });
+});
+
+app.get('/api/staff/counselors', requireCounselorAdmin, (_req, res) => {
+  return res.json({ counselors: [...counselorEmails].sort() });
+});
+
+app.post('/api/staff/counselors', requireCounselorAdmin, (req, res) => {
+  const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !email.endsWith(`@${workspaceDomain}`)) {
+    return res.status(400).json({ error: `Enter a valid email address in the ${workspaceDomain} school domain.` });
+  }
+  if (counselorEmails.has(email)) {
+    return res.status(409).json({ error: 'That counselor is already approved.' });
+  }
+  counselorEmails.add(email);
+  return res.status(201).json({ email });
 });
 
 app.get('/api/staff/calls', requireCounselor, (_req, res) => {
