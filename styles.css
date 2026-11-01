@@ -112,7 +112,6 @@ h2 { margin: 0; font-size: 30px; font-weight: 600; line-height: 1.2; }
 .call-mute { min-height: 36px; padding: 7px 10px; border: 1px solid #cbd6cd; border-radius: 3px; color: var(--ink); background: white; font-size: 11px; font-weight: 600; cursor: pointer; }
 .call-end { border-color: #a94336; background: #a94336; }
 .call-end:hover { background: #823329; }
-.call-fallback { display: inline-flex; gap: 6px; margin-top: 4px; color: var(--green); font-size: 11px; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 .remote-audio audio { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .consultation-form { display: flex; flex-direction: column; }
 .consultation-form label { margin: 0 0 8px; font-size: 12px; font-weight: 700; }
