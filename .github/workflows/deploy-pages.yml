@@ -42,6 +42,7 @@ jobs:
         run: |
           mkdir _site
           cp index.html calls.html staff.html styles.css app.js calls.js staff.js call-config.js call-client.js _site/
+          cp -R assets _site/assets
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
