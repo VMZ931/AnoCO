@@ -78,9 +78,9 @@ async function finishCall(message) {
       message = 'Audio disconnected on this device. The call session will expire automatically.';
     }
   }
-  callStatus.textContent = message;
   endingCall = false;
   await refreshAvailability();
+  callStatus.textContent = message;
 }
 
 async function pollCallStatus() {
