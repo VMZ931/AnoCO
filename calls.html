@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f8faf6" />
+    <meta name="description" content="Check counselor availability and start an audio-only call when an approved counselor is online." />
+    <title>AnoCo | Talk with a Counselor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css?v=6" />
+    <script src="call-config.js?v=2" defer></script>
+    <script src="calls.js?v=1" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="AnoCo home">
+        <span class="brand-mark" aria-hidden="true">A</span>
+        <span>AnoCo<span class="brand-period">.</span></span>
+      </a>
+      <a class="header-cta" href="index.html">Student support <span aria-hidden="true">&#8599;</span></a>
+    </header>
+
+    <main class="calls-main">
+      <a class="calls-back" href="index.html#consultation"><span aria-hidden="true">&#8592;</span> Back to student support</a>
+      <section class="calls-card" aria-labelledby="calls-title">
+        <div class="calls-heading">
+          <span class="calls-icon" aria-hidden="true">&#9742;</span>
+          <p class="eyebrow">AUDIO-ONLY SUPPORT</p>
+          <h1 id="calls-title">Talk with a counselor</h1>
+          <p class="calls-intro">When an approved counselor is online, you can start a private audio call here. No name or written message is needed.</p>
+        </div>
+
+        <aside class="calls-privacy">
+          <strong>Your call is not recorded by AnoCo.</strong>
+          <p>Your audio is sent to LiveKit to connect the call. AnoCo does not save call details or written drafts. Use a private space if you can.</p>
+        </aside>
+
+        <div class="calls-action">
+          <button class="call-button" id="call-start" type="button" disabled>Checking availability...</button>
+          <p class="call-status" id="call-status" role="status" aria-live="polite">Checking whether an approved counselor is online.</p>
+          <div class="call-controls" id="call-controls" hidden>
+            <button class="call-mute" id="call-mute" type="button">Mute microphone</button>
+            <button class="call-end" id="call-end" type="button">End call</button>
+          </div>
+          <div class="remote-audio" id="remote-audio" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <aside class="calls-urgent" aria-labelledby="calls-urgent-title">
+        <strong id="calls-urgent-title">This is not crisis support.</strong>
+        <p>A counselor may not be online, and calls are not monitored as an emergency service. If you or someone else may be in immediate danger, tell a trusted adult now or contact local emergency services.</p>
+      </aside>
+    </main>
+
+    <footer class="site-footer">
+      <a class="brand footer-brand" href="index.html" aria-label="AnoCo home"><span class="brand-mark" aria-hidden="true">A</span><span>AnoCo<span class="brand-period">.</span></span></a>
+      <p>A supportive starting point for student mental wellbeing.</p>
+      <a class="footer-grade" href="staff.html">COUNSELOR SIGN-IN</a>
+    </footer>
+  </body>
+</html>
