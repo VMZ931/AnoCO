@@ -5,7 +5,7 @@ import express from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { OAuth2Client } from 'google-auth-library';
 import helmet from 'helmet';
-import { AccessToken, RoomServiceClient } from 'livekit-server-sdk';
+import { AccessToken, RoomServiceClient, TrackSource } from 'livekit-server-sdk';
 
 const app = express();
 const port = Number(process.env.PORT || 8787);
@@ -144,7 +144,7 @@ async function createJoinToken({ identity, roomName, canPublish }) {
     canPublish,
     canSubscribe: true,
     canPublishData: false,
-    canPublishSources: ['microphone'],
+    canPublishSources: [TrackSource.MICROPHONE],
   });
   return token.toJwt();
 }
