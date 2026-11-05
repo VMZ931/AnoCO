@@ -144,7 +144,7 @@ async function joinCall(callId) {
       : error.name === 'NotFoundError'
         ? 'No microphone was found. Connect a microphone and try again.'
         : error.message;
-    await endCall();
+    await endCall(queueStatus.textContent);
   }
 }
 
