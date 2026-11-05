@@ -33,6 +33,7 @@ jobs:
           node --check app.js
           node --check call-config.js
           node --check call-client.js
+          node --check calls.js
           node --check staff.js
           node --check server/server.js
       - name: Configure Pages
@@ -40,7 +41,7 @@ jobs:
       - name: Stage static site
         run: |
           mkdir _site
-          cp index.html staff.html styles.css app.js staff.js call-config.js call-client.js _site/
+          cp index.html calls.html staff.html styles.css app.js calls.js staff.js call-config.js call-client.js _site/
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
