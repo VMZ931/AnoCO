@@ -107,7 +107,16 @@
           <textarea id="question" name="question" rows="5" maxlength="1200" placeholder="Write a question you might ask a trusted adult or counselor. Leave out identifying details." required></textarea>
           <div class="field-meta"><span>Share only what feels safe. No names or identifying details.</span><span id="character-count">0 / 1200</span></div>
 
-          <button class="submit-button" type="submit">Preview your message <span aria-hidden="true">&#8594;</span></button>
+          <fieldset class="message-consent">
+            <legend>Before you continue</legend>
+            <label for="message-preview-consent">
+              <input id="message-preview-consent" name="preview-consent" type="checkbox" required />
+              I understand this is only a private preview. My message is not sent, stored, or seen by a counselor.
+            </label>
+            <p>Message sending is not enabled. The school must approve the privacy and safeguarding process before submissions can be collected.</p>
+          </fieldset>
+
+          <button class="submit-button" type="submit">Preview only (not sent) <span aria-hidden="true">&#8594;</span></button>
           <p class="form-result" id="form-result" role="status" aria-live="polite" hidden></p>
           <aside class="urgent-note" aria-labelledby="urgent-title">
             <strong id="urgent-title">Need help urgently?</strong>
