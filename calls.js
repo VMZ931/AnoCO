@@ -9,6 +9,7 @@ let callId = null;
 let callRoom = null;
 let callPollTimer = null;
 let availabilityTimer = null;
+let lastAvailabilityMessage = '';
 let microphoneMuted = false;
 let endingCall = false;
 
@@ -43,15 +44,23 @@ async function refreshAvailability() {
     callStartButton.textContent = !configured
       ? 'Calls not configured'
       : available ? 'Start an audio call' : 'No counselor online';
-    callStatus.textContent = !configured
+    const availabilityMessage = !configured
       ? 'The school call service still needs its approved settings.'
       : available
         ? 'An approved counselor is online. Starting a call will ask for microphone access.'
         : 'Calls are available only while an approved counselor is online.';
+    if (availabilityMessage !== lastAvailabilityMessage) {
+      callStatus.textContent = availabilityMessage;
+      lastAvailabilityMessage = availabilityMessage;
+    }
   } catch {
     callStartButton.disabled = true;
     callStartButton.textContent = 'Calls unavailable';
-    callStatus.textContent = 'The call service could not be reached. Please try again later.';
+    const availabilityMessage = 'The call service could not be reached. Please try again later.';
+    if (availabilityMessage !== lastAvailabilityMessage) {
+      callStatus.textContent = availabilityMessage;
+      lastAvailabilityMessage = availabilityMessage;
+    }
   }
 }
 
