@@ -9,6 +9,7 @@ let callId = null;
 let callRoom = null;
 let callPollTimer = null;
 let availabilityTimer = null;
+let rateLimitTimer = null;
 let lastAvailabilityMessage = '';
 let microphoneMuted = false;
 let endingCall = false;
@@ -32,12 +33,43 @@ async function callApi(path, options = {}) {
   } catch {
     throw new Error('The call service returned an invalid response.');
   }
-  if (!response.ok) throw new Error(payload.error || 'The call service is unavailable.');
+  if (!response.ok) {
+    const error = new Error(payload.error || 'The call service is unavailable.');
+    if (response.status === 429) {
+      error.retryAfterSeconds = Number(response.headers.get('Retry-After')) || 900;
+    }
+    throw error;
+  }
   return payload;
 }
 
+function startRateLimitCountdown(seconds) {
+  window.clearInterval(rateLimitTimer);
+  const retryAt = Date.now() + seconds * 1000;
+
+  function updateCountdown() {
+    const remaining = Math.max(0, Math.ceil((retryAt - Date.now()) / 1000));
+    if (remaining === 0) {
+      window.clearInterval(rateLimitTimer);
+      rateLimitTimer = null;
+      callStartButton.textContent = 'Check availability';
+      callStatus.textContent = 'You can try checking availability again.';
+      void refreshAvailability();
+      return;
+    }
+    const minutes = Math.floor(remaining / 60);
+    const secondsLeft = remaining % 60;
+    callStartButton.disabled = true;
+    callStartButton.textContent = `Try again in ${minutes}:${String(secondsLeft).padStart(2, '0')}`;
+    callStatus.textContent = 'Too many call attempts. Please wait for the timer before trying again.';
+  }
+
+  updateCountdown();
+  rateLimitTimer = window.setInterval(updateCountdown, 1000);
+}
+
 async function refreshAvailability() {
-  if (!callApiBase || callId) return;
+  if (!callApiBase || callId || rateLimitTimer) return;
   try {
     const { configured, available } = await callApi('/availability');
     callStartButton.disabled = !configured || !available;
@@ -144,7 +176,14 @@ async function startCall() {
       : error.name === 'NotFoundError'
         ? 'No microphone was found. Connect a microphone and try again.'
         : error.message || 'The call could not be started. Please try again.';
-    await finishCall(message);
+    if (callId) {
+      await finishCall(message);
+    } else if (error.retryAfterSeconds) {
+      startRateLimitCountdown(error.retryAfterSeconds);
+    } else {
+      await refreshAvailability();
+      callStatus.textContent = message;
+    }
   }
 }
 
@@ -173,6 +212,7 @@ if (callApiBase) {
 window.addEventListener('pagehide', () => {
   window.clearInterval(callPollTimer);
   window.clearInterval(availabilityTimer);
+  window.clearInterval(rateLimitTimer);
   if (callId && callApiBase) {
     void fetch(`${callApiBase}/api/calls/${encodeURIComponent(callId)}/end`, {
       method: 'POST',
