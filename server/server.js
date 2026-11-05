@@ -199,7 +199,8 @@ app.post('/api/calls', studentCallLimiter, async (_req, res) => {
     });
     sessions.set(callId, session);
     return res.status(201).json({ callId, serverUrl: liveKitUrl, token });
-  } catch {
+  } catch (error) {
+    console.error('LiveKit call setup failed:', error instanceof Error ? error.message : 'Unknown error');
     await roomService.deleteRoom(roomName).catch(() => {});
     return res.status(503).json({ error: 'A call could not be started. Please try again later.' });
   }
@@ -276,7 +277,8 @@ app.post('/api/staff/calls/:callId/join', requireCounselor, async (req, res) => 
     session.status = 'active';
     session.counselorId = req.counselorId;
     return res.json({ serverUrl: liveKitUrl, token });
-  } catch {
+  } catch (error) {
+    console.error('LiveKit counselor join failed:', error instanceof Error ? error.message : 'Unknown error');
     session.status = 'waiting';
     return res.status(503).json({ error: 'The call could not be joined.' });
   }
