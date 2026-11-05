@@ -12,6 +12,14 @@ let availabilityTimer = null;
 let microphoneMuted = false;
 let endingCall = false;
 
+async function requestMicrophonePermission() {
+  if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+    throw new Error('Microphone access requires the hosted HTTPS site. Do not use a local file copy.');
+  }
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  for (const track of stream.getTracks()) track.stop();
+}
+
 async function callApi(path, options = {}) {
   const response = await fetch(`${callApiBase}/api${path}`, {
     ...options,
@@ -100,6 +108,7 @@ async function startCall() {
   let createdCallId = null;
 
   try {
+    await requestMicrophonePermission();
     const call = await callApi('/calls', { method: 'POST' });
     createdCallId = call.callId;
     callId = call.callId;
@@ -123,7 +132,9 @@ async function startCall() {
     if (createdCallId && !callId) callId = createdCallId;
     const message = error.name === 'NotAllowedError'
       ? 'Microphone access was not granted. Allow it in your browser settings to try again.'
-      : error.message || 'The call could not be started. Please try again.';
+      : error.name === 'NotFoundError'
+        ? 'No microphone was found. Connect a microphone and try again.'
+        : error.message || 'The call could not be started. Please try again.';
     await finishCall(message);
   }
 }
