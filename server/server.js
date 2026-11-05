@@ -46,6 +46,7 @@ app.use(cors({
   },
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Retry-After'],
 }));
 app.use(express.json({ limit: '8kb' }));
 
@@ -54,6 +55,7 @@ const studentCallLimiter = rateLimit({
   limit: 3,
   standardHeaders: true,
   legacyHeaders: false,
+  skipFailedRequests: true,
   message: { error: 'Too many call requests. Please wait before trying again.' },
 });
 
