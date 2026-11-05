@@ -22,6 +22,14 @@ let presenceTimer = null;
 let muted = false;
 let endingCall = false;
 
+async function requestMicrophonePermission() {
+  if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+    throw new Error('Microphone access requires the hosted HTTPS site. Do not use a local file copy.');
+  }
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  for (const track of stream.getTracks()) track.stop();
+}
+
 async function api(path, options = {}) {
   const response = await fetch(`${apiBase}/api${path}`, {
     ...options,
@@ -110,6 +118,7 @@ async function refreshQueue() {
 async function joinCall(callId) {
   queueStatus.textContent = 'Connecting to the student...';
   try {
+    await requestMicrophonePermission();
     const call = await api(`/staff/calls/${encodeURIComponent(callId)}/join`, { method: 'POST' });
     activeCallId = callId;
     activeCallStatus.textContent = 'Waiting for the student to connect...';
@@ -132,7 +141,9 @@ async function joinCall(callId) {
   } catch (error) {
     queueStatus.textContent = error.name === 'NotAllowedError'
       ? 'Microphone access was not granted. Allow it in browser settings to answer calls.'
-      : error.message;
+      : error.name === 'NotFoundError'
+        ? 'No microphone was found. Connect a microphone and try again.'
+        : error.message;
     await endCall();
   }
 }
