@@ -285,3 +285,8 @@ h2 { margin: 0; font-size: 30px; font-weight: 600; line-height: 1.2; }
 .counselor-inbox h2 { margin: 0 0 8px; font-size: 18px; }
 .counselor-inbox p { max-width: 650px; margin: 0 0 14px; color: var(--muted); font-size: 12px; line-height: 1.6; }
 .inbox-disabled-button { min-height: 36px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 3px; color: var(--muted); background: #f3f5f2; font-size: 11px; font-weight: 700; cursor: not-allowed; }
+
+
+.message-consent { align-self: stretch; width: 100%; min-width: 0; }
+.message-consent label { display: grid; grid-template-columns: 16px minmax(0, 1fr); align-items: center; gap: 9px; width: 100%; margin: 0; }
+.consultation-form .message-consent input[type="checkbox"] { display: block; box-sizing: border-box; width: 16px; min-width: 16px; max-width: 16px; height: 16px; min-height: 16px; margin: 0; padding: 0; }
