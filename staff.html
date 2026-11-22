@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="styles.css?v=9" />
     <script src="https://accounts.google.com/gsi/client" defer></script>
     <script src="call-config.js?v=2" defer></script>
-    <script src="staff.js?v=7" defer></script>
+    <script src="staff.js?v=8" defer></script>
   </head>
   <body>
     <header class="site-header">
@@ -51,7 +51,7 @@
         <p class="staff-status" id="queue-status" role="status" aria-live="polite">You're online for calls.</p>
         <section class="counselor-inbox" aria-labelledby="counselor-inbox-title">
           <h2 id="counselor-inbox-title">Student message inbox</h2>
-          <p>Messages contain sensitive information. Review only as part of your approved school process. When enabled, messages are held only in server memory, automatically deleted after the configured retention period or when deleted here, and lost if the service restarts. They are not linked to calls and will not be deleted when a call ends.</p>
+          <p>Messages contain sensitive information. Review only as part of your approved school process. When enabled, messages are held only in server memory, automatically deleted after the configured amount of counselor-online time or when deleted here, and lost if the service restarts. The retention timer pauses when no counselor is online. Messages are not linked to calls and will not be deleted when a call ends.</p>
           <p id="inbox-retention"></p>
           <div class="inbox-toolbar">
             <p class="staff-status" id="inbox-status" role="status" aria-live="polite">Checking message intake...</p>

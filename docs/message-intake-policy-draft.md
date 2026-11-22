@@ -1,6 +1,6 @@
 # AnoCo student-message intake policy (DRAFT — NOT APPROVED)
 
-**Status:** Draft — approval and operational details must be verified before real student use. The form and counselor inbox now have a prototype implementation, but submissions are disabled by default. When enabled, messages exist only in the server process's memory, are deleted at the configured retention age or by a counselor, and are lost on service restart or sleep. This is not durable storage or a guarantee of review.
+**Status:** Draft — approval and operational details must be verified before real student use. The form and counselor inbox now have a prototype implementation, but submissions are disabled by default. When enabled, messages exist only in the server process's memory, are deleted after the configured cumulative counselor-online retention time or by a counselor, and are lost on service restart or sleep. The timer pauses when no counselor presence is active. This is not durable storage or a guarantee of review.
 
 ## Proposed student notice
 
@@ -28,7 +28,7 @@ Before publication, the school must replace or confirm the notice, including the
 
 ### Retention and deletion
 
-- Counselors can delete messages from the inbox. The prototype also removes messages after the configured `MESSAGE_RETENTION_HOURS` age (1–720 hours), measured from submission.
+- Counselors can delete messages from the inbox. The prototype also removes messages after the configured `MESSAGE_RETENTION_HOURS` of cumulative time while at least one counselor presence is active (1–720 hours). The timer pauses when no counselor is online; it does not measure wall-clock time from submission.
 - **School decision required before launch:** approve the maximum retention period, identify who checks and enforces deletion, and explain whether hosting-provider records can retain content after deletion. The in-memory prototype cannot enforce deletion from provider records or recover data after a restart.
 - Confirm how student requests for deletion, access, or correction will be handled, where legally applicable.
 
@@ -38,7 +38,7 @@ Before publication, the school must replace or confirm the notice, including the
 - [ ] Applicable student privacy, consent, safeguarding, and record-retention requirements are reviewed for the school's jurisdiction and student age group.
 - [ ] The school confirms actual 24/7 staffing, response expectations, handoffs, and urgent-risk escalation.
 - [ ] A durable, secure, access-controlled inbox is implemented and reviewed; approved counselors can read and delete messages, and unauthorized users cannot. The current in-memory prototype does not satisfy the durability requirement.
-- [ ] A maximum retention/deletion rule, backup behavior, incident response, and provider handling are documented.
+- [ ] A maximum counselor-online retention/deletion rule, backup behavior, incident response, and provider handling are documented.
 - [ ] A reply method is either explicitly out of scope or approved and safely implemented.
 - [ ] The end-to-end workflow is tested with staff test data before real student use.
 

@@ -306,7 +306,7 @@ async function initializeConsole() {
     messageIntakeEnabled = Boolean(config.messageIntakeEnabled);
     messageRetentionHours = config.messageRetentionHours;
     inboxRetention.textContent = messageIntakeEnabled
-      ? `Messages automatically expire after ${messageRetentionHours} hours.`
+      ? `Messages automatically expire after ${messageRetentionHours} hours while at least one counselor is online. The timer pauses when no counselor is online.`
       : 'Message retention must be configured before submissions can be enabled.';
 
     if (!window.google?.accounts?.id) {

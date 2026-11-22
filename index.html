@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css?v=11" />
     <script src="call-config.js?v=2" defer></script>
-    <script src="app.js?v=5" defer></script>
+    <script src="app.js?v=6" defer></script>
   </head>
   <body>
     <header class="site-header">
@@ -121,7 +121,7 @@
 
           <label for="question">What would you like help thinking through?</label>
           <textarea id="question" name="question" rows="5" maxlength="1200" placeholder="Write a question you might ask a trusted adult or counselor." required></textarea>
-          <div class="field-meta"><span>Submissions are held in server memory and deleted after the configured retention period or by a counselor.</span><span id="character-count">0 / 1200</span></div>
+          <div class="field-meta"><span>Submissions are held in server memory and expire after the configured retention time while a counselor is online, or when deleted by a counselor.</span><span id="character-count">0 / 1200</span></div>
 
           <button class="submit-button" id="message-submit" type="submit" disabled>Sending unavailable <span aria-hidden="true">&#8594;</span></button>
           <p class="staff-status" id="message-intake-status" role="status" aria-live="polite">Checking message service availability...</p>

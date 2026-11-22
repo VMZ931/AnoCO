@@ -50,6 +50,8 @@ const roomService = liveKitUrl && liveKitApiKey && liveKitApiSecret
 const sessionLifetimeMs = 20 * 60 * 1000;
 const closedSessionLifetimeMs = 5 * 60 * 1000;
 const counselorPresenceLifetimeMs = 30 * 1000;
+let messageRetentionUpdatedAt = Date.now();
+let counselorCoverageUntil = 0;
 
 app.set('trust proxy', 1);
 app.use(helmet());
@@ -136,10 +138,13 @@ function requireCounselorAdmin(req, res, next) {
 }
 
 function currentCounselorCount() {
-  const cutoff = Date.now() - counselorPresenceLifetimeMs;
+  const now = Date.now();
+  pruneMessages(now);
+  const cutoff = now - counselorPresenceLifetimeMs;
   for (const [id, lastSeen] of counselors) {
     if (lastSeen < cutoff) counselors.delete(id);
   }
+  pruneMessages(now);
   return counselors.size;
 }
 
@@ -270,6 +275,7 @@ app.post('/api/messages', studentMessageLimiter, (req, res) => {
     studentPhone,
     studentGrade,
     submittedAt: Date.now(),
+    retainedOnlineMs: 0,
   };
   messages.set(submission.id, submission);
   return res.status(201).json({ submitted: true });
@@ -289,7 +295,10 @@ app.post('/api/calls/:callId/end', async (req, res) => {
 });
 
 app.post('/api/staff/presence', requireCounselor, (_req, res) => {
-  counselors.set(_req.counselorId, Date.now());
+  const now = Date.now();
+  pruneMessages(now);
+  counselors.set(_req.counselorId, now);
+  pruneMessages(now);
   return res.json({ available: true });
 });
 
@@ -393,9 +402,28 @@ setInterval(() => {
 
 function pruneMessages(now = Date.now()) {
   if (!messageIntakeEnabled) return;
+  advanceMessageRetention(now);
   const retentionMs = messageRetentionHours * 60 * 60 * 1000;
   for (const [id, message] of messages) {
-    if (now - message.submittedAt >= retentionMs) messages.delete(id);
+    if (message.retainedOnlineMs >= retentionMs) messages.delete(id);
+  }
+}
+
+function advanceMessageRetention(now) {
+  const coveredUntil = Math.min(now, counselorCoverageUntil);
+  if (coveredUntil > messageRetentionUpdatedAt) {
+    for (const message of messages.values()) {
+      const coveredFrom = Math.max(messageRetentionUpdatedAt, message.submittedAt);
+      message.retainedOnlineMs += Math.max(0, coveredUntil - coveredFrom);
+    }
+  }
+  messageRetentionUpdatedAt = now;
+  counselorCoverageUntil = 0;
+  for (const lastSeen of counselors.values()) {
+    counselorCoverageUntil = Math.max(
+      counselorCoverageUntil,
+      lastSeen + counselorPresenceLifetimeMs,
+    );
   }
 }
 

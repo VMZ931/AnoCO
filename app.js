@@ -36,7 +36,7 @@ async function checkMessageService() {
     if (config.messageIntakeEnabled) {
       messageSubmitButton.disabled = false;
       messageSubmitButton.innerHTML = 'Send to a counselor <span aria-hidden="true">&#8594;</span>';
-      messageIntakeStatus.textContent = `Only approved counselors can read messages. Messages are automatically deleted after ${config.messageRetentionHours} hours. Replies are not guaranteed.`;
+      messageIntakeStatus.textContent = `Only approved counselors can read messages. Messages are automatically deleted after ${config.messageRetentionHours} hours while a counselor is online. Replies are not guaranteed.`;
     } else {
       messageSubmitButton.disabled = true;
       messageIntakeStatus.textContent = 'Message sending is not enabled. Nothing you type is sent or saved.';
