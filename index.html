@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f8faf6" />
+    <meta name="description" content="A supportive starting point for Grade 12 students thinking about stress, anxiety, mood, relationships, and finding help." />
+    <title>AnoCo | Student Mental Wellbeing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css?v=11" />
+    <script src="call-config.js?v=2" defer></script>
+    <script src="app.js?v=5" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#home" aria-label="AnoCo home">
+        <img class="brand-logo" src="assets/anoco-logo.png" alt="" />
+      </a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="#topics">Explore topics</a>
+        <a href="#consultation">Start here</a>
+        <a href="calls.html">Talk to a counselor</a>
+      </nav>
+      <a class="header-cta" href="calls.html">Talk to a counselor <span aria-hidden="true">&#8599;</span></a>
+    </header>
+
+    <main id="home">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> A supportive place to begin</p>
+          <h1 id="hero-title">You don't have to carry it <em>alone.</em></h1>
+          <p class="hero-intro">Stress, anxious thoughts, low mood, or relationship worries can be a lot to hold. AnoCo helps Grade 12 students find words for what's going on and think about a next step.</p>
+          <a class="primary-link" href="#topics">Explore support topics <span aria-hidden="true">&#8594;</span></a>
+          <p class="hero-note"><span aria-hidden="true">&#10003;</span> No account or name needed <span class="note-divider" aria-hidden="true"></span> Counselor calls when available</p>
+        </div>
+        <figure class="hero-photo">
+          <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1100&q=85" alt="Students spending time together in a calm campus setting" />
+          <figcaption><span class="caption-spark" aria-hidden="true">&#10022;</span><span>Asking for support is a meaningful first step.</span></figcaption>
+        </figure>
+        <div class="hero-index" aria-hidden="true">01 / YOUR WELLBEING</div>
+      </section>
+
+      <section class="topic-section" id="topics" aria-labelledby="topic-title">
+        <div class="section-heading">
+          <p class="eyebrow">YOU CAN START ANYWHERE</p>
+          <h2 id="topic-title">What has been feeling heavy?</h2>
+          <p>Choose what feels closest. You don't need to have the perfect words.</p>
+        </div>
+        <div class="topic-list" role="group" aria-label="Choose a mental wellbeing topic">
+          <button class="topic-button" type="button" data-topic="Stress & overwhelm">
+            <span class="topic-icon icon-green" aria-hidden="true">&#8599;</span><span>Stress &amp; overwhelm</span><span class="topic-arrow" aria-hidden="true">&#8594;</span>
+          </button>
+          <button class="topic-button" type="button" data-topic="Anxiety & worry">
+            <span class="topic-icon icon-yellow" aria-hidden="true">&#9673;</span><span>Anxiety &amp; worry</span><span class="topic-arrow" aria-hidden="true">&#8594;</span>
+          </button>
+          <button class="topic-button" type="button" data-topic="Mood & motivation">
+            <span class="topic-icon icon-blue" aria-hidden="true">&#10022;</span><span>Mood &amp; motivation</span><span class="topic-arrow" aria-hidden="true">&#8594;</span>
+          </button>
+          <button class="topic-button" type="button" data-topic="Friends & family">
+            <span class="topic-icon icon-coral" aria-hidden="true">&#9825;</span><span>Friends &amp; family</span><span class="topic-arrow" aria-hidden="true">&#8594;</span>
+          </button>
+          <button class="topic-button" type="button" data-topic="Finding support">
+            <span class="topic-icon icon-lilac" aria-hidden="true">&#8594;</span><span>Finding support</span><span class="topic-arrow" aria-hidden="true">&#8594;</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="consultation-section" id="consultation" aria-labelledby="consultation-title">
+        <div class="consultation-aside">
+          <p class="eyebrow">A GENTLE PLACE TO BEGIN</p>
+          <h2 id="consultation-title">What would you like support with?</h2>
+          <p>Use this space to shape a question you might bring to a trusted adult or school counselor.</p>
+          <div class="privacy-note">
+            <span class="privacy-icon" aria-hidden="true">&#9673;</span>
+            <div><strong>Only send what you feel safe sharing.</strong><p>If sending is enabled, your topic and message go to the approved counselor inbox. Contact details and grade or section are optional. This is not crisis support, and a response is not guaranteed.</p></div>
+          </div>
+          <div class="call-preview" aria-labelledby="call-title">
+            <span class="call-icon" aria-hidden="true">&#9742;</span>
+            <div class="call-content">
+              <strong id="call-title">Talk with a counselor</strong>
+              <p>Audio-only calls happen here when a counselor is available. Your voice is sent to LiveKit to connect the call; AnoCo does not record calls.</p>
+              <a class="call-button" href="calls.html">Open call page</a>
+              <p class="call-status">Open the call page to check counselor availability and start an audio-only call.</p>
+            </div>
+          </div>
+        </div>
+        <form class="consultation-form" id="consultation-form">
+          <label for="topic-select">Choose a topic</label>
+          <select id="topic-select" name="topic" required>
+            <option value="" disabled selected>Choose a topic</option>
+            <option>Stress &amp; overwhelm</option>
+            <option>Anxiety &amp; worry</option>
+            <option>Mood &amp; motivation</option>
+            <option>Friends &amp; family</option>
+            <option>Finding support</option>
+          </select>
+
+          <fieldset class="optional-details">
+            <legend>Optional contact details</legend>
+            <div class="optional-details-grid">
+              <div>
+                <label for="student-name">Name or preferred name</label>
+                <input id="student-name" name="studentName" type="text" maxlength="80" autocomplete="name" placeholder="Name" />
+              </div>
+              <div>
+                <label for="student-email">Email address</label>
+                <input id="student-email" name="studentEmail" type="email" maxlength="254" autocomplete="email" placeholder="Email" />
+              </div>
+              <div>
+                <label for="student-phone">Phone number</label>
+                <input id="student-phone" name="studentPhone" type="tel" maxlength="40" autocomplete="tel" placeholder="Phone number" />
+              </div>
+              <div>
+                <label for="student-grade">Grade or section</label>
+                <input id="student-grade" name="studentGrade" type="text" maxlength="40" autocomplete="off" placeholder="Grade or section" />
+              </div>
+            </div>
+          </fieldset>
+
+          <label for="question">What would you like help thinking through?</label>
+          <textarea id="question" name="question" rows="5" maxlength="1200" placeholder="Write a question you might ask a trusted adult or counselor." required></textarea>
+          <div class="field-meta"><span>Submissions are held in server memory and deleted after the configured retention period or by a counselor.</span><span id="character-count">0 / 1200</span></div>
+
+          <button class="submit-button" id="message-submit" type="submit" disabled>Sending unavailable <span aria-hidden="true">&#8594;</span></button>
+          <p class="staff-status" id="message-intake-status" role="status" aria-live="polite">Checking message service availability...</p>
+          <p class="form-result" id="form-result" role="status" aria-live="polite" hidden></p>
+          <aside class="urgent-note" aria-labelledby="urgent-title">
+            <strong id="urgent-title">Need help urgently?</strong>
+            <p>If you may be in immediate danger or might hurt yourself or someone else, tell a trusted adult now or contact local emergency services. AnoCo calls may be unavailable and are not crisis support.</p>
+          </aside>
+        </form>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <a class="brand footer-brand" href="#home" aria-label="AnoCo home"><img class="brand-logo" src="assets/anoco-logo.png" alt="" /></a>
+      <p>A supportive starting point for student mental wellbeing.</p>
+      <a class="footer-grade" href="calls.html">TALK TO A COUNSELOR</a>
+      <a class="footer-grade" href="staff.html">COUNSELOR SIGN-IN</a>
+    </footer>
+  </body>
+</html>
