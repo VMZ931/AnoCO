@@ -12,7 +12,8 @@ const counselorManagement = document.querySelector('#counselor-management');
 const counselorForm = document.querySelector('#counselor-form');
 const counselorEmail = document.querySelector('#counselor-email');
 const counselorManagementStatus = document.querySelector('#counselor-management-status');
-const counselorList = document.querySelector('#counselor-list');
+const counselorRoster = document.querySelector('#counselor-roster');
+const counselorRosterStatus = document.querySelector('#counselor-roster-status');
 const inboxStatus = document.querySelector('#inbox-status');
 const inboxList = document.querySelector('#inbox-list');
 const inboxRefreshButton = document.querySelector('#inbox-refresh');
@@ -26,6 +27,7 @@ let messageRetentionHours = null;
 let queueTimer = null;
 let presenceTimer = null;
 let inboxTimer = null;
+let counselorRosterTimer = null;
 let muted = false;
 let endingCall = false;
 
@@ -57,27 +59,47 @@ function setStaffStatus(message) {
 
 async function refreshCounselors() {
   const { counselors } = await api('/staff/counselors');
-  counselorList.replaceChildren();
-  for (const email of counselors) {
+  counselorRoster.replaceChildren();
+  for (const counselor of counselors) {
     const item = document.createElement('li');
-    item.textContent = email;
-    counselorList.append(item);
+    const email = document.createElement('span');
+    email.textContent = counselor.email;
+    const presence = document.createElement('span');
+    presence.className = counselor.online ? 'counselor-presence is-online' : 'counselor-presence';
+    presence.textContent = counselor.online ? 'Online' : 'Offline';
+    item.append(email, presence);
+    item.classList.add('counselor-roster-item');
+    counselorRoster.append(item);
+  }
+  counselorRosterStatus.textContent = counselors.length
+    ? 'Status updates automatically while you are signed in.'
+    : 'No approved counselors are configured.';
+}
+
+async function updateCounselorRoster() {
+  if (!googleCredential) return;
+  try {
+    await refreshCounselors();
+  } catch (error) {
+    counselorRosterStatus.textContent = `Counselor status could not be refreshed: ${error.message}`;
   }
 }
 
 async function loadCounselorManagement() {
   const { canManageCounselors } = await api('/staff/session');
   counselorManagement.hidden = !canManageCounselors;
-  if (canManageCounselors) await refreshCounselors();
 }
 
 async function sendPresence() {
-  if (!callServiceReady) return;
   try {
     await api('/staff/presence', { method: 'POST' });
-    queueStatus.textContent = activeCallId ? "You're online and speaking with a student." : "You're online for calls.";
+    if (callServiceReady) {
+      queueStatus.textContent = activeCallId ? "You're online and speaking with a student." : "You're online for calls.";
+    }
+    await updateCounselorRoster();
   } catch (error) {
-    queueStatus.textContent = error.message;
+    if (callServiceReady) queueStatus.textContent = error.message;
+    counselorRosterStatus.textContent = `Your online status could not be updated: ${error.message}`;
   }
 }
 
@@ -166,6 +188,35 @@ async function refreshInbox() {
       }
       const content = document.createElement('p');
       content.textContent = message.message;
+      const replyGroup = document.createElement('div');
+      replyGroup.className = 'inbox-reply';
+      if (message.studentEmail) {
+        const replyLabel = document.createElement('label');
+        replyLabel.textContent = 'Reply';
+        const replyId = `reply-${message.id}`;
+        replyLabel.htmlFor = replyId;
+        const replyTextarea = document.createElement('textarea');
+        replyTextarea.id = replyId;
+        replyTextarea.name = 'reply';
+        replyTextarea.rows = 4;
+        replyTextarea.maxLength = 2000;
+        replyTextarea.placeholder = `Reply to ${message.studentEmail}`;
+        const replyStatus = document.createElement('p');
+        replyStatus.className = 'staff-status';
+        replyStatus.setAttribute('role', 'status');
+        replyStatus.setAttribute('aria-live', 'polite');
+        const sendButton = document.createElement('button');
+        sendButton.className = 'call-button';
+        sendButton.type = 'button';
+        sendButton.textContent = 'Send reply';
+        sendButton.addEventListener('click', () => sendReply(message.id, replyTextarea, sendButton, replyStatus));
+        replyGroup.append(replyLabel, replyTextarea, sendButton, replyStatus);
+      } else {
+        const unavailable = document.createElement('p');
+        unavailable.className = 'staff-status';
+        unavailable.textContent = 'This message cannot be emailed because no student email address was provided.';
+        replyGroup.append(unavailable);
+      }
       const deleteButton = document.createElement('button');
       deleteButton.className = 'sign-out-button';
       deleteButton.type = 'button';
@@ -175,7 +226,7 @@ async function refreshInbox() {
       item.append(heading);
       if (message.studentName) item.append(studentName);
       if (contactParts.length) item.append(contactDetails);
-      item.append(content, deleteButton);
+      item.append(content, replyGroup, deleteButton);
       inboxList.append(item);
     }
     inboxStatus.textContent = `${messages.length} message${messages.length === 1 ? '' : 's'} in the inbox.`;
@@ -183,6 +234,30 @@ async function refreshInbox() {
     inboxStatus.textContent = `Inbox could not be refreshed: ${error.message}`;
   } finally {
     inboxRefreshButton.disabled = false;
+  }
+}
+
+async function sendReply(messageId, textarea, button, status) {
+  const reply = textarea.value.trim();
+  if (!reply) {
+    status.textContent = 'Enter a reply before sending.';
+    textarea.focus();
+    return;
+  }
+
+  button.disabled = true;
+  status.textContent = 'Sending reply...';
+  try {
+    await api(`/staff/messages/${encodeURIComponent(messageId)}/reply`, {
+      method: 'POST',
+      body: JSON.stringify({ reply }),
+    });
+    textarea.value = '';
+    status.textContent = 'Reply sent.';
+  } catch (error) {
+    status.textContent = `Reply could not be sent: ${error.message}`;
+  } finally {
+    button.disabled = false;
   }
 }
 
@@ -258,13 +333,16 @@ async function endCall(message = 'The call has ended.') {
 
 async function handleGoogleCredential(response) {
   googleCredential = response.credential;
+  window.clearInterval(queueTimer);
+  window.clearInterval(presenceTimer);
+  window.clearInterval(inboxTimer);
+  window.clearInterval(counselorRosterTimer);
   try {
-    await api(callServiceReady ? '/staff/presence' : '/staff/session', {
-      method: callServiceReady ? 'POST' : 'GET',
-    });
+    await api('/staff/presence', { method: 'POST' });
     loginSection.hidden = true;
     dashboard.hidden = false;
     setStaffStatus('Counselor sign-in verified.');
+    await updateCounselorRoster();
     if (!callServiceReady) {
       queueStatus.textContent = 'The call queue is unavailable until the LiveKit call service is configured.';
     }
@@ -282,6 +360,7 @@ async function handleGoogleCredential(response) {
     await refreshQueue();
     queueTimer = window.setInterval(refreshQueue, 4000);
     presenceTimer = window.setInterval(sendPresence, 10000);
+    counselorRosterTimer = window.setInterval(updateCounselorRoster, 15000);
   } catch (error) {
     googleCredential = '';
     setStaffStatus(error.message);
@@ -327,9 +406,14 @@ async function initializeConsole() {
       text: 'signin_with',
       shape: 'rectangular',
     });
-    setStaffStatus(callServiceReady
-      ? 'Sign in using your approved school counselor account.'
-      : 'Sign in to manage counselor access. Audio calls are not configured yet.');
+    setStaffStatus('Checking for an active school Google sign-in...');
+    window.google.accounts.id.prompt((notification) => {
+      if (!googleCredential && (notification.isNotDisplayed() || notification.isSkippedMoment())) {
+        setStaffStatus(callServiceReady
+          ? 'Choose your approved school account with the Google sign-in button.'
+          : 'Sign in with an approved school account to manage counselor access.');
+      }
+    });
   } catch {
     setStaffStatus('The call service could not be reached.');
     signInButton.hidden = true;
@@ -349,7 +433,7 @@ counselorForm.addEventListener('submit', async (event) => {
       body: JSON.stringify({ email: counselorEmail.value }),
     });
     counselorForm.reset();
-    counselorManagementStatus.textContent = `${email} can now sign in. This addition will be lost if the call service restarts.`;
+    counselorManagementStatus.textContent = `${email} can now sign in. Add the address to COUNSELOR_EMAILS for approval that survives a service restart.`;
     try {
       await refreshCounselors();
     } catch (error) {
@@ -379,14 +463,21 @@ document.querySelector('#staff-call-mute').addEventListener('click', async (even
 
 document.querySelector('#staff-sign-out').addEventListener('click', async () => {
   await endCall('You signed out.');
+  try {
+    await api('/staff/presence/end', { method: 'POST' });
+  } catch (error) {
+    queueStatus.textContent = `Sign-out succeeded, but online status may take up to 30 seconds to clear: ${error.message}`;
+  }
   window.google?.accounts?.id?.disableAutoSelect();
   window.clearInterval(queueTimer);
   window.clearInterval(presenceTimer);
   window.clearInterval(inboxTimer);
+  window.clearInterval(counselorRosterTimer);
   googleCredential = '';
   dashboard.hidden = true;
   counselorManagement.hidden = true;
-  counselorList.replaceChildren();
+  counselorRoster.replaceChildren();
+  counselorRosterStatus.textContent = 'Sign in to view counselor status.';
   counselorManagementStatus.textContent = '';
   inboxList.replaceChildren();
   inboxStatus.textContent = 'Sign in to review messages.';
@@ -400,6 +491,7 @@ window.addEventListener('pagehide', () => {
   window.clearInterval(queueTimer);
   window.clearInterval(presenceTimer);
   window.clearInterval(inboxTimer);
+  window.clearInterval(counselorRosterTimer);
   if (activeCallId && apiBase) {
     void fetch(`${apiBase}/api/staff/calls/${encodeURIComponent(activeCallId)}/end`, {
       method: 'POST',

@@ -8,10 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=9" />
+    <link rel="stylesheet" href="styles.css?v=11" />
     <script src="https://accounts.google.com/gsi/client" defer></script>
     <script src="call-config.js?v=2" defer></script>
-    <script src="staff.js?v=8" defer></script>
+    <script src="staff.js?v=10" defer></script>
   </head>
   <body>
     <header class="site-header">
@@ -49,6 +49,12 @@
           <button class="sign-out-button" id="staff-sign-out" type="button">Sign out</button>
         </div>
         <p class="staff-status" id="queue-status" role="status" aria-live="polite">You're online for calls.</p>
+        <section class="counselor-directory" aria-labelledby="counselor-directory-title">
+          <h2 id="counselor-directory-title">Counselors</h2>
+          <p>Online status reflects an active counselor-console session and may take up to 30 seconds to update.</p>
+          <p class="staff-status" id="counselor-roster-status" role="status" aria-live="polite">Loading counselor list...</p>
+          <ul class="counselor-list" id="counselor-roster" aria-label="Counselors and online status"></ul>
+        </section>
         <section class="counselor-inbox" aria-labelledby="counselor-inbox-title">
           <h2 id="counselor-inbox-title">Student message inbox</h2>
           <p>Messages contain sensitive information. Review only as part of your approved school process. When enabled, messages are held only in server memory, automatically deleted after the configured amount of counselor-online time or when deleted here, and lost if the service restarts. The retention timer pauses when no counselor is online. Messages are not linked to calls and will not be deleted when a call ends.</p>
@@ -57,11 +63,15 @@
             <p class="staff-status" id="inbox-status" role="status" aria-live="polite">Checking message intake...</p>
             <button class="sign-out-button" id="inbox-refresh" type="button" disabled>Refresh inbox</button>
           </div>
+          <section class="inbox-call-queue" aria-label="Students waiting for a call">
+            <h3>Waiting calls</h3>
+            <ul class="call-queue" id="call-queue" aria-label="Students waiting for a call"></ul>
+          </section>
           <ul class="inbox-list" id="inbox-list" aria-label="Student messages"></ul>
         </section>
         <section class="counselor-management" id="counselor-management" aria-labelledby="counselor-management-title" hidden>
           <h2 id="counselor-management-title">Manage counselor access</h2>
-          <p>Only add approved staff with an account in your school's Google Workspace. Added counselors can sign in immediately; changes made here are lost when the call service restarts.</p>
+          <p>Only add approved staff with an account in your school's Google Workspace. Additions here are temporary and are lost if the call service restarts; add permanent counselor accounts to the service's COUNSELOR_EMAILS setting.</p>
           <form class="counselor-form" id="counselor-form">
             <label for="counselor-email">School email address</label>
             <div class="counselor-form-row">
@@ -70,10 +80,7 @@
             </div>
           </form>
           <p class="staff-status" id="counselor-management-status" role="status" aria-live="polite"></p>
-          <ul class="counselor-list" id="counselor-list" aria-label="Approved counselors"></ul>
         </section>
-        <ul class="call-queue" id="call-queue" aria-label="Students waiting for a call"></ul>
-
         <div class="staff-active-call" id="staff-active-call" hidden>
           <strong id="active-call-status">Connecting to the student...</strong>
           <div class="call-controls">

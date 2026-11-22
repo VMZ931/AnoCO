@@ -27,3 +27,7 @@ services:
         sync: false
       - key: ALLOWED_ORIGINS
         value: https://vmz931.github.io
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false

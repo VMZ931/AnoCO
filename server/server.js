@@ -11,6 +11,8 @@ const app = express();
 const port = Number(process.env.PORT || 8787);
 const workspaceDomain = (process.env.GOOGLE_WORKSPACE_DOMAIN || '').trim().toLowerCase();
 const googleClientId = process.env.GOOGLE_CLIENT_ID || '';
+const resendApiKey = process.env.RESEND_API_KEY || '';
+const resendFromEmail = process.env.RESEND_FROM_EMAIL || '';
 const counselorEmails = new Set((process.env.COUNSELOR_EMAILS || '')
   .split(',')
   .map((email) => email.trim().toLowerCase())
@@ -141,8 +143,8 @@ function currentCounselorCount() {
   const now = Date.now();
   pruneMessages(now);
   const cutoff = now - counselorPresenceLifetimeMs;
-  for (const [id, lastSeen] of counselors) {
-    if (lastSeen < cutoff) counselors.delete(id);
+  for (const [id, presence] of counselors) {
+    if (presence.lastSeen < cutoff) counselors.delete(id);
   }
   pruneMessages(now);
   return counselors.size;
@@ -294,12 +296,21 @@ app.post('/api/calls/:callId/end', async (req, res) => {
   return res.json({ status: session.status });
 });
 
-app.post('/api/staff/presence', requireCounselor, (_req, res) => {
+app.post('/api/staff/presence', requireCounselor, (req, res) => {
   const now = Date.now();
   pruneMessages(now);
-  counselors.set(_req.counselorId, now);
+  counselors.set(req.counselorId, { email: req.counselorEmail, lastSeen: now });
   pruneMessages(now);
   return res.json({ available: true });
+});
+
+app.post('/api/staff/presence/end', requireCounselor, (req, res) => {
+  const now = Date.now();
+  pruneMessages(now);
+  counselors.delete(req.counselorId);
+  currentCounselorCount();
+  pruneMessages(now);
+  return res.json({ available: false });
 });
 
 app.get('/api/staff/session', requireCounselor, (req, res) => {
@@ -322,8 +333,58 @@ app.delete('/api/staff/messages/:messageId', requireCounselor, (req, res) => {
   return res.json({ deleted: true });
 });
 
-app.get('/api/staff/counselors', requireCounselorAdmin, (_req, res) => {
-  return res.json({ counselors: [...counselorEmails].sort() });
+app.post('/api/staff/messages/:messageId/reply', requireCounselor, async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const message = messages.get(req.params.messageId);
+  if (!message) {
+    return res.status(404).json({ error: 'That message is no longer in the inbox.' });
+  }
+  if (!message.studentEmail) {
+    return res.status(400).json({ error: 'This message does not include a student email address.' });
+  }
+  if (!resendApiKey || !resendFromEmail) {
+    return res.status(503).json({ error: 'Server email replies are not configured.' });
+  }
+
+  const reply = typeof req.body?.reply === 'string' ? req.body.reply.trim() : '';
+  if (reply.length < 1 || reply.length > 2000) {
+    return res.status(400).json({ error: 'Enter a reply of 1 to 2000 characters.' });
+  }
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: resendFromEmail,
+        to: [message.studentEmail],
+        subject: `Re: ${message.topic}`,
+        text: `${reply}\n\n---\nAnoCo student support`,
+      }),
+    });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      console.error('Server email reply failed:', payload?.message || `HTTP ${response.status}`);
+      return res.status(502).json({ error: 'The reply could not be sent. Please try again.' });
+    }
+    return res.json({ replied: true });
+  } catch (error) {
+    console.error('Server email reply failed:', error instanceof Error ? error.message : 'Unknown error');
+    return res.status(502).json({ error: 'The reply could not be sent. Please try again.' });
+  }
+});
+
+app.get('/api/staff/counselors', requireCounselor, (_req, res) => {
+  res.set('Cache-Control', 'no-store');
+  currentCounselorCount();
+  const onlineEmails = new Set([...counselors.values()].map((presence) => presence.email));
+  const roster = [...counselorEmails]
+    .sort()
+    .map((email) => ({ email, online: onlineEmails.has(email) }));
+  return res.json({ counselors: roster });
 });
 
 app.post('/api/staff/counselors', requireCounselorAdmin, (req, res) => {
@@ -419,7 +480,7 @@ function advanceMessageRetention(now) {
   }
   messageRetentionUpdatedAt = now;
   counselorCoverageUntil = 0;
-  for (const lastSeen of counselors.values()) {
+  for (const { lastSeen } of counselors.values()) {
     counselorCoverageUntil = Math.max(
       counselorCoverageUntil,
       lastSeen + counselorPresenceLifetimeMs,

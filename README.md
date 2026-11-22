@@ -31,6 +31,8 @@ Calls are not ready for real student use until the school has approved the provi
 
 The call queue and counselor presence currently live in one server process and disappear on restart; don't use this scaffold for a production student service until durable operational design, provider/privacy review, consent, retention, safeguarding, and incident response are approved.
 
+To enable server-side inbox replies, set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` on the call service. The sender address must be verified with Resend. Replies are available only for inbox messages that include a student email address.
+
 The counselor message inbox uses the same allowlisted Google counselor authentication as the call console. Students can submit a topic, message, and optional name, email address, phone number, and grade or section. Counselors can refresh and delete messages. Messages are automatically removed after `MESSAGE_RETENTION_HOURS` of cumulative time while at least one counselor is online; the timer pauses when no counselor is online. Messages are also lost whenever the server restarts or sleeps. Inbox messages are independent of audio calls and are not deleted when a call ends. The inbox is a prototype, not a durable or monitored service; use a school-approved durable store and operational process before collecting real student contact information.
 
 The hero photograph and web fonts load from external providers and require an internet connection; the layout and form otherwise work locally.

@@ -161,6 +161,11 @@ h2 { margin: 0; font-size: 30px; font-weight: 600; line-height: 1.2; }
 .counselor-inbox p { max-width: 650px; margin: 0 0 14px; color: var(--muted); font-size: 12px; line-height: 1.6; }
 .inbox-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .inbox-toolbar .staff-status { margin: 0; }
+.inbox-call-queue { margin: 14px 0 18px; padding: 14px; border: 1px solid #b8ccbc; border-radius: 4px; background: #eef5ec; }
+.inbox-call-queue h3 { margin: 0 0 10px; color: var(--green-deep); font-size: 14px; }
+.inbox-call-queue .call-queue { margin: 0; }
+.inbox-call-queue .queue-item { min-height: 72px; padding: 12px 14px; }
+.inbox-call-queue .queue-item .call-button { min-width: 170px; min-height: 50px; padding: 12px 18px; font-size: 15px; }
 .inbox-list { margin: 0; padding: 0; list-style: none; }
 .inbox-item { margin-top: 12px; padding: 15px; border: 1px solid var(--line); background: #fbfcfa; }
 .inbox-item-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
@@ -168,11 +173,23 @@ h2 { margin: 0; font-size: 30px; font-weight: 600; line-height: 1.2; }
 .inbox-item-heading time { color: var(--muted); font-size: 11px; }
 .inbox-item > p { margin: 12px 0; color: var(--ink); font-size: 13px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
 .inbox-item > .inbox-student-name, .inbox-item > .inbox-contact-details { color: var(--muted); font-size: 12px; }
+.inbox-reply { display: grid; gap: 8px; margin: 14px 0; max-width: 650px; }
+.inbox-reply label { color: var(--ink); font-size: 12px; font-weight: 700; }
+.inbox-reply textarea { width: 100%; min-height: 96px; resize: vertical; padding: 11px; border: 1px solid var(--line); border-radius: 4px; color: var(--ink); background: white; font: inherit; font-size: 13px; line-height: 1.6; }
+.inbox-reply textarea:focus { outline: 2px solid var(--green); outline-offset: 2px; }
+.inbox-reply .call-button { justify-self: start; }
+.inbox-reply .staff-status { margin: 0; }
 .inbox-item button:disabled, .inbox-toolbar button:disabled { cursor: wait; opacity: .68; }
 .queue-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 52px; }
 .queue-heading .eyebrow { margin-bottom: 7px; }
 .queue-heading h2 { margin: 0; }
 .sign-out-button { padding: 8px 11px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink); background: white; font-size: 11px; font-weight: 600; cursor: pointer; }
+.counselor-directory { margin: 22px 0; padding: 18px; border: 1px solid var(--line); background: white; }
+.counselor-directory h2 { margin: 0 0 8px; font-size: 18px; }
+.counselor-directory > p:not(.staff-status) { max-width: 650px; margin: 0 0 12px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.counselor-roster-item { display: flex; flex: 1 1 250px; align-items: center; justify-content: space-between; gap: 12px; }
+.counselor-presence { flex: 0 0 auto; padding: 4px 8px; border-radius: 999px; color: #526057; background: #edf0ed; font-size: 10px; font-weight: 700; }
+.counselor-presence.is-online { color: #245c3d; background: #dcefe1; }
 .counselor-management { margin-top: 28px; padding: 18px; border: 1px solid var(--line); background: white; }
 .counselor-management[hidden] { display: none !important; }
 .counselor-management h2 { margin: 0 0 8px; font-size: 18px; }
@@ -183,7 +200,7 @@ h2 { margin: 0; font-size: 30px; font-weight: 600; line-height: 1.2; }
 .counselor-form input:focus-visible, .counselor-form button:focus-visible { outline: 3px solid #d5e6d3; outline-offset: 2px; }
 .counselor-form button:disabled { cursor: wait; opacity: .68; }
 .counselor-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.counselor-list li { padding: 6px 9px; border-radius: 3px; color: var(--green-deep); background: #eaf2e9; font-size: 11px; overflow-wrap: anywhere; }
+.counselor-list li { padding: 9px 11px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink); background: #fbfcfa; font-size: 12px; overflow-wrap: anywhere; }
 .call-queue { margin: 18px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
 .queue-item { display: flex; align-items: center; justify-content: space-between; gap: 18px; min-height: 72px; padding: 12px 4px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12px; }
 .queue-empty { padding: 19px 4px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12px; }
@@ -210,6 +227,7 @@ h2 { margin: 0; font-size: 30px; font-weight: 600; line-height: 1.2; }
   .staff-main { width: calc(100% - 44px); padding: 52px 0 64px; }
   .staff-main h1 { font-size: 38px; }
   .inbox-toolbar { align-items: flex-start; flex-direction: column; }
+  .inbox-call-queue .queue-item .call-button { width: 100%; min-width: 0; }
   .calls-main { width: calc(100% - 36px); padding: 32px 0 52px; }
   .calls-card { padding: 24px 19px; }
   .queue-item { align-items: flex-start; flex-direction: column; gap: 10px; }
