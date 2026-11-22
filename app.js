@@ -9,7 +9,18 @@ const studentNameField = document.querySelector('#student-name');
 const studentEmailField = document.querySelector('#student-email');
 const studentPhoneField = document.querySelector('#student-phone');
 const studentGradeField = document.querySelector('#student-grade');
+const threadPanel = document.querySelector('#student-thread');
+const threadTitle = document.querySelector('#student-thread-title');
+const threadTopic = document.querySelector('#student-thread-topic');
+const threadLink = document.querySelector('#student-thread-link');
+const threadMessages = document.querySelector('#student-thread-messages');
+const threadReplyForm = document.querySelector('#student-thread-reply');
+const threadReplyField = document.querySelector('#student-thread-reply-text');
+const threadReplyButton = document.querySelector('#student-thread-reply-submit');
+const threadStatus = document.querySelector('#student-thread-status');
 const apiBase = (window.ANOCO_CALL_API || '').replace(/\/$/, '');
+let studentThreadToken = '';
+let threadRefreshTimer = null;
 
 for (const button of document.querySelectorAll('[data-topic]')) {
   button.addEventListener('click', () => {
@@ -47,6 +58,101 @@ async function checkMessageService() {
   }
 }
 
+function addConversationMessage(entry) {
+  const item = document.createElement('li');
+  item.className = `student-thread-message ${entry.sender === 'counselor' ? 'from-counselor' : 'from-student'}`;
+  const sender = document.createElement('strong');
+  sender.textContent = entry.sender === 'counselor' ? 'Counselor' : 'You';
+  const timestamp = document.createElement('time');
+  const date = new Date(entry.sentAt);
+  if (!Number.isNaN(date.getTime())) {
+    timestamp.dateTime = date.toISOString();
+    timestamp.textContent = new Intl.DateTimeFormat(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(date);
+  }
+  const message = document.createElement('p');
+  message.textContent = entry.message;
+  item.append(sender, timestamp, message);
+  threadMessages.append(item);
+}
+
+async function refreshStudentThread({ showStatus = false } = {}) {
+  if (!studentThreadToken) return;
+  if (!apiBase) {
+    threadStatus.textContent = 'The message service is unavailable. Your reply has not been sent.';
+    return;
+  }
+  try {
+    const response = await fetch(`${apiBase}/api/student/thread`, {
+      headers: { Authorization: `Bearer ${studentThreadToken}` },
+      cache: 'no-store',
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || 'This private conversation could not be loaded.');
+    threadTopic.textContent = payload.topic;
+    threadMessages.replaceChildren();
+    for (const entry of payload.conversation) addConversationMessage(entry);
+    if (showStatus) threadStatus.textContent = 'Conversation loaded. Replies are not monitored as an emergency service.';
+  } catch (error) {
+    threadStatus.textContent = error.message;
+    window.clearInterval(threadRefreshTimer);
+    threadRefreshTimer = null;
+  }
+}
+
+async function openStudentThread(token, { updateHash = false } = {}) {
+  studentThreadToken = token;
+  threadPanel.hidden = false;
+  threadMessages.replaceChildren();
+  threadTitle.textContent = 'Your counselor conversation';
+  threadStatus.textContent = 'Loading your private conversation...';
+  window.clearInterval(threadRefreshTimer);
+  threadRefreshTimer = null;
+  showPrivateThreadLink(token);
+  if (updateHash) {
+    form.hidden = true;
+    history.replaceState(null, '', `${location.pathname}${location.search}#thread=${encodeURIComponent(token)}`);
+  }
+  await refreshStudentThread({ showStatus: true });
+  if (threadMessages.childElementCount > 0) {
+    form.hidden = true;
+    threadPanel.scrollIntoView({ block: 'start' });
+    threadTitle.focus({ preventScroll: true });
+    window.clearInterval(threadRefreshTimer);
+    threadRefreshTimer = window.setInterval(() => {
+      if (!document.hidden) void refreshStudentThread();
+    }, 15000);
+  }
+}
+
+function showPrivateThreadLink(token) {
+  const threadUrl = `${location.origin}${location.pathname}${location.search}#thread=${encodeURIComponent(token)}`;
+  const link = document.createElement('a');
+  link.href = threadUrl;
+  link.textContent = 'Open your private conversation link';
+  link.className = 'thread-link';
+  const copyButton = document.createElement('button');
+  copyButton.type = 'button';
+  copyButton.className = 'thread-copy-button';
+  copyButton.textContent = 'Copy private link';
+  copyButton.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(threadUrl);
+      copyButton.textContent = 'Link copied';
+    } catch {
+      copyButton.textContent = 'Copy unavailable — use the link above';
+    }
+  });
+  threadLink.replaceChildren(
+    document.createTextNode('Save this private link so you can return to the conversation: '),
+    link,
+    document.createTextNode(' '),
+    copyButton,
+  );
+}
+
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
   if (!form.reportValidity()) return;
@@ -71,9 +177,13 @@ form.addEventListener('submit', async (event) => {
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(payload.error || 'Your message could not be sent.');
-    result.textContent = 'Your message was sent to the counselor inbox. It is not an emergency service, and a response is not guaranteed.';
+    if (typeof payload.threadToken !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(payload.threadToken)) {
+      throw new Error('The message service did not return a valid private conversation link.');
+    }
+    result.textContent = 'Your message was sent. Your conversation is not an emergency service, and a response is not guaranteed.';
     form.reset();
     characterCount.textContent = '0 / 1200';
+    await openStudentThread(payload.threadToken, { updateHash: true });
   } catch (error) {
     result.classList.add('error');
     result.textContent = `${error.message} Your message was not confirmed as sent.`;
@@ -81,6 +191,44 @@ form.addEventListener('submit', async (event) => {
     await checkMessageService();
   }
 });
+
+threadReplyForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (!threadReplyForm.reportValidity() || !studentThreadToken) return;
+  if (!apiBase) {
+    threadStatus.textContent = 'The message service is unavailable. Your reply has not been sent.';
+    return;
+  }
+
+  threadReplyButton.disabled = true;
+  threadStatus.textContent = 'Sending your reply...';
+  try {
+    const response = await fetch(`${apiBase}/api/student/replies`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${studentThreadToken}`,
+      },
+      body: JSON.stringify({ reply: threadReplyField.value }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || 'Your reply could not be sent.');
+    threadReplyField.value = '';
+    await refreshStudentThread();
+    threadStatus.textContent = 'Your reply was sent. Counselor replies will appear here.';
+  } catch (error) {
+    threadStatus.textContent = error.message;
+  } finally {
+    threadReplyButton.disabled = false;
+  }
+});
+
+const existingThreadToken = new URLSearchParams(location.hash.slice(1)).get('thread');
+if (existingThreadToken && /^[A-Za-z0-9_-]{43}$/.test(existingThreadToken)) {
+  void openStudentThread(existingThreadToken);
+}
+
+window.addEventListener('pagehide', () => window.clearInterval(threadRefreshTimer));
 
 void checkMessageService();
 

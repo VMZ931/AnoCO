@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import cors from 'cors';
 import express from 'express';
 import { rateLimit } from 'express-rate-limit';
@@ -11,8 +11,6 @@ const app = express();
 const port = Number(process.env.PORT || 8787);
 const workspaceDomain = (process.env.GOOGLE_WORKSPACE_DOMAIN || '').trim().toLowerCase();
 const googleClientId = process.env.GOOGLE_CLIENT_ID || '';
-const resendApiKey = process.env.RESEND_API_KEY || '';
-const resendFromEmail = process.env.RESEND_FROM_EMAIL || '';
 const counselorEmails = new Set((process.env.COUNSELOR_EMAILS || '')
   .split(',')
   .map((email) => email.trim().toLowerCase())
@@ -39,6 +37,7 @@ const googleClient = new OAuth2Client(googleClientId);
 const sessions = new Map();
 const counselors = new Map();
 const messages = new Map();
+const studentThreadLookup = new Map();
 const messageTopics = new Set([
   'Stress & overwhelm',
   'Anxiety & worry',
@@ -84,6 +83,28 @@ const studentMessageLimiter = rateLimit({
   skipFailedRequests: true,
   message: { error: 'Too many message submissions. Please wait before trying again.' },
 });
+function studentThreadKey(req) {
+  const match = req.headers.authorization?.match(/^Bearer\s+([A-Za-z0-9_-]{43})$/);
+  return match
+    ? createHash('sha256').update(match[1]).digest('hex')
+    : 'invalid-student-thread';
+}
+
+const studentThreadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: studentThreadKey,
+});
+const studentReplyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many replies. Please wait before trying again.' },
+  keyGenerator: studentThreadKey,
+});
 
 function counselorSignInReady() {
   return Boolean(workspaceDomain && googleClientId && counselorEmails.size > 0 && allowedOrigins.length > 0);
@@ -99,6 +120,21 @@ function requireService(res) {
   if (serviceReady()) return true;
   res.status(503).json({ error: 'The counselor call service is not configured yet.' });
   return false;
+}
+
+function requireStudentThread(req, res, next) {
+  res.set('Cache-Control', 'no-store');
+  const match = req.headers.authorization?.match(/^Bearer\s+([A-Za-z0-9_-]{43})$/);
+  if (!match) return res.status(404).json({ error: 'This private conversation is unavailable or has expired.' });
+
+  const tokenHash = createHash('sha256').update(match[1]).digest('hex');
+  const messageId = studentThreadLookup.get(tokenHash);
+  pruneMessages();
+  const message = messageId ? messages.get(messageId) : null;
+  if (!message) return res.status(404).json({ error: 'This private conversation is unavailable or has expired.' });
+
+  req.studentMessage = message;
+  return next();
 }
 
 async function requireCounselor(req, res, next) {
@@ -268,6 +304,8 @@ app.post('/api/messages', studentMessageLimiter, (req, res) => {
     return res.status(503).json({ error: 'The counselor inbox is full. Please try again later or use the call page.' });
   }
 
+  const threadToken = randomBytes(32).toString('base64url');
+  const threadTokenHash = createHash('sha256').update(threadToken).digest('hex');
   const submission = {
     id: randomUUID(),
     topic,
@@ -278,9 +316,35 @@ app.post('/api/messages', studentMessageLimiter, (req, res) => {
     studentGrade,
     submittedAt: Date.now(),
     retainedOnlineMs: 0,
+    threadTokenHash,
+    conversation: [{ sender: 'student', message, sentAt: Date.now() }],
   };
   messages.set(submission.id, submission);
-  return res.status(201).json({ submitted: true });
+  studentThreadLookup.set(threadTokenHash, submission.id);
+  return res.status(201).json({ submitted: true, threadToken });
+});
+
+app.get('/api/student/thread', studentThreadLimiter, requireStudentThread, (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  return res.json({
+    topic: req.studentMessage.topic,
+    conversation: req.studentMessage.conversation,
+  });
+});
+
+app.post('/api/student/replies', studentReplyLimiter, requireStudentThread, (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const reply = typeof req.body?.reply === 'string' ? req.body.reply.trim() : '';
+  if (reply.length < 1 || reply.length > 1200) {
+    return res.status(400).json({ error: 'Enter a reply of 1 to 1200 characters.' });
+  }
+  if (req.studentMessage.conversation.length >= 50) {
+    return res.status(409).json({ error: 'This conversation has reached its reply limit.' });
+  }
+
+  const entry = { sender: 'student', message: reply, sentAt: Date.now() };
+  req.studentMessage.conversation.push(entry);
+  return res.status(201).json({ reply: entry });
 });
 
 app.get('/api/calls/:callId', (req, res) => {
@@ -321,60 +385,40 @@ app.get('/api/staff/messages', requireCounselor, (_req, res) => {
   res.set('Cache-Control', 'no-store');
   pruneMessages();
   return res.json({
-    messages: [...messages.values()].sort((left, right) => left.submittedAt - right.submittedAt),
+    messages: [...messages.values()]
+      .sort((left, right) => left.submittedAt - right.submittedAt)
+      .map(({ threadTokenHash, ...message }) => message),
   });
 });
 
 app.delete('/api/staff/messages/:messageId', requireCounselor, (req, res) => {
   res.set('Cache-Control', 'no-store');
-  if (!messages.delete(req.params.messageId)) {
+  const message = messages.get(req.params.messageId);
+  if (!message) {
     return res.status(404).json({ error: 'That message is no longer in the inbox.' });
   }
+  messages.delete(req.params.messageId);
+  studentThreadLookup.delete(message.threadTokenHash);
   return res.json({ deleted: true });
 });
 
-app.post('/api/staff/messages/:messageId/reply', requireCounselor, async (req, res) => {
+app.post('/api/staff/messages/:messageId/reply', requireCounselor, (req, res) => {
   res.set('Cache-Control', 'no-store');
   const message = messages.get(req.params.messageId);
   if (!message) {
     return res.status(404).json({ error: 'That message is no longer in the inbox.' });
   }
-  if (!message.studentEmail) {
-    return res.status(400).json({ error: 'This message does not include a student email address.' });
-  }
-  if (!resendApiKey || !resendFromEmail) {
-    return res.status(503).json({ error: 'Server email replies are not configured.' });
-  }
-
   const reply = typeof req.body?.reply === 'string' ? req.body.reply.trim() : '';
   if (reply.length < 1 || reply.length > 2000) {
     return res.status(400).json({ error: 'Enter a reply of 1 to 2000 characters.' });
   }
-
-  try {
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${resendApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: resendFromEmail,
-        to: [message.studentEmail],
-        subject: `Re: ${message.topic}`,
-        text: `${reply}\n\n---\nAnoCo student support`,
-      }),
-    });
-    if (!response.ok) {
-      const payload = await response.json().catch(() => ({}));
-      console.error('Server email reply failed:', payload?.message || `HTTP ${response.status}`);
-      return res.status(502).json({ error: 'The reply could not be sent. Please try again.' });
-    }
-    return res.json({ replied: true });
-  } catch (error) {
-    console.error('Server email reply failed:', error instanceof Error ? error.message : 'Unknown error');
-    return res.status(502).json({ error: 'The reply could not be sent. Please try again.' });
+  if (message.conversation.length >= 50) {
+    return res.status(409).json({ error: 'This conversation has reached its reply limit.' });
   }
+
+  const entry = { sender: 'counselor', message: reply, sentAt: Date.now() };
+  message.conversation.push(entry);
+  return res.json({ replied: true, reply: entry });
 });
 
 app.get('/api/staff/counselors', requireCounselor, (_req, res) => {
@@ -466,7 +510,10 @@ function pruneMessages(now = Date.now()) {
   advanceMessageRetention(now);
   const retentionMs = messageRetentionHours * 60 * 60 * 1000;
   for (const [id, message] of messages) {
-    if (message.retainedOnlineMs >= retentionMs) messages.delete(id);
+    if (message.retainedOnlineMs >= retentionMs) {
+      messages.delete(id);
+      studentThreadLookup.delete(message.threadTokenHash);
+    }
   }
 }
 

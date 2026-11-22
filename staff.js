@@ -147,6 +147,16 @@ async function refreshQueue() {
 async function refreshInbox() {
   if (!googleCredential || !messageIntakeEnabled) return;
   inboxRefreshButton.disabled = true;
+  const replyDrafts = new Map(
+    [...inboxList.querySelectorAll('.inbox-reply textarea')].map((textarea) => [textarea.id, textarea.value]),
+  );
+  const activeReply = document.activeElement?.matches('.inbox-reply textarea')
+    ? {
+      id: document.activeElement.id,
+      selectionStart: document.activeElement.selectionStart,
+      selectionEnd: document.activeElement.selectionEnd,
+    }
+    : null;
   try {
     const { messages } = await api('/staff/messages');
     inboxList.replaceChildren();
@@ -188,35 +198,50 @@ async function refreshInbox() {
       }
       const content = document.createElement('p');
       content.textContent = message.message;
+      const conversation = document.createElement('ol');
+      conversation.className = 'counselor-thread';
+      conversation.setAttribute('aria-label', 'Conversation replies');
+      for (const entry of (message.conversation || []).slice(1)) {
+        const replyItem = document.createElement('li');
+        const sender = document.createElement('strong');
+        sender.textContent = entry.sender === 'counselor' ? 'Counselor' : 'Student';
+        const replyTime = document.createElement('time');
+        const replyDate = new Date(entry.sentAt);
+        if (!Number.isNaN(replyDate.getTime())) {
+          replyTime.dateTime = replyDate.toISOString();
+          replyTime.textContent = new Intl.DateTimeFormat(undefined, {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+          }).format(replyDate);
+        }
+        const replyContent = document.createElement('p');
+        replyContent.textContent = entry.message;
+        replyItem.append(sender, replyTime, replyContent);
+        conversation.append(replyItem);
+      }
       const replyGroup = document.createElement('div');
       replyGroup.className = 'inbox-reply';
-      if (message.studentEmail) {
-        const replyLabel = document.createElement('label');
-        replyLabel.textContent = 'Reply';
-        const replyId = `reply-${message.id}`;
-        replyLabel.htmlFor = replyId;
-        const replyTextarea = document.createElement('textarea');
-        replyTextarea.id = replyId;
-        replyTextarea.name = 'reply';
-        replyTextarea.rows = 4;
-        replyTextarea.maxLength = 2000;
-        replyTextarea.placeholder = `Reply to ${message.studentEmail}`;
-        const replyStatus = document.createElement('p');
-        replyStatus.className = 'staff-status';
-        replyStatus.setAttribute('role', 'status');
-        replyStatus.setAttribute('aria-live', 'polite');
-        const sendButton = document.createElement('button');
-        sendButton.className = 'call-button';
-        sendButton.type = 'button';
-        sendButton.textContent = 'Send reply';
-        sendButton.addEventListener('click', () => sendReply(message.id, replyTextarea, sendButton, replyStatus));
-        replyGroup.append(replyLabel, replyTextarea, sendButton, replyStatus);
-      } else {
-        const unavailable = document.createElement('p');
-        unavailable.className = 'staff-status';
-        unavailable.textContent = 'This message cannot be emailed because no student email address was provided.';
-        replyGroup.append(unavailable);
-      }
+      const replyLabel = document.createElement('label');
+      replyLabel.textContent = 'Reply in the private student conversation';
+      const replyId = `reply-${message.id}`;
+      replyLabel.htmlFor = replyId;
+      const replyTextarea = document.createElement('textarea');
+      replyTextarea.id = replyId;
+      replyTextarea.name = 'reply';
+      replyTextarea.rows = 4;
+      replyTextarea.maxLength = 2000;
+      replyTextarea.placeholder = 'Write a reply for the student to read on the website.';
+      replyTextarea.value = replyDrafts.get(replyId) || '';
+      const replyStatus = document.createElement('p');
+      replyStatus.className = 'staff-status';
+      replyStatus.setAttribute('role', 'status');
+      replyStatus.setAttribute('aria-live', 'polite');
+      const sendButton = document.createElement('button');
+      sendButton.className = 'call-button';
+      sendButton.type = 'button';
+      sendButton.textContent = 'Send reply';
+      sendButton.addEventListener('click', () => sendReply(message.id, replyTextarea, sendButton, replyStatus, conversation));
+      replyGroup.append(replyLabel, replyTextarea, sendButton, replyStatus);
       const deleteButton = document.createElement('button');
       deleteButton.className = 'sign-out-button';
       deleteButton.type = 'button';
@@ -226,8 +251,15 @@ async function refreshInbox() {
       item.append(heading);
       if (message.studentName) item.append(studentName);
       if (contactParts.length) item.append(contactDetails);
-      item.append(content, replyGroup, deleteButton);
+      item.append(content, conversation, replyGroup, deleteButton);
       inboxList.append(item);
+    }
+    if (activeReply) {
+      const restoredReply = document.getElementById(activeReply.id);
+      if (restoredReply) {
+        restoredReply.focus({ preventScroll: true });
+        restoredReply.setSelectionRange(activeReply.selectionStart, activeReply.selectionEnd);
+      }
     }
     inboxStatus.textContent = `${messages.length} message${messages.length === 1 ? '' : 's'} in the inbox.`;
   } catch (error) {
@@ -237,7 +269,7 @@ async function refreshInbox() {
   }
 }
 
-async function sendReply(messageId, textarea, button, status) {
+async function sendReply(messageId, textarea, button, status, conversation) {
   const reply = textarea.value.trim();
   if (!reply) {
     status.textContent = 'Enter a reply before sending.';
@@ -248,12 +280,28 @@ async function sendReply(messageId, textarea, button, status) {
   button.disabled = true;
   status.textContent = 'Sending reply...';
   try {
-    await api(`/staff/messages/${encodeURIComponent(messageId)}/reply`, {
+    const { reply: entry } = await api(`/staff/messages/${encodeURIComponent(messageId)}/reply`, {
       method: 'POST',
       body: JSON.stringify({ reply }),
     });
+    const replyItem = document.createElement('li');
+    const sender = document.createElement('strong');
+    sender.textContent = 'Counselor';
+    const replyContent = document.createElement('p');
+    replyContent.textContent = entry.message;
+    const replyTime = document.createElement('time');
+    const replyDate = new Date(entry.sentAt);
+    if (!Number.isNaN(replyDate.getTime())) {
+      replyTime.dateTime = replyDate.toISOString();
+      replyTime.textContent = new Intl.DateTimeFormat(undefined, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }).format(replyDate);
+    }
+    replyItem.append(sender, replyTime, replyContent);
+    conversation.append(replyItem);
     textarea.value = '';
-    status.textContent = 'Reply sent.';
+    status.textContent = 'Reply sent. It will appear on the student’s private conversation page.';
   } catch (error) {
     status.textContent = `Reply could not be sent: ${error.message}`;
   } finally {
