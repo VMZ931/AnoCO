@@ -317,7 +317,7 @@ async function initializeConsole() {
     window.google.accounts.id.initialize({
       client_id: config.googleClientId,
       callback: handleGoogleCredential,
-      auto_select: false,
+      auto_select: true,
       cancel_on_tap_outside: true,
     });
     window.google.accounts.id.renderButton(signInButton, {
@@ -379,6 +379,7 @@ document.querySelector('#staff-call-mute').addEventListener('click', async (even
 
 document.querySelector('#staff-sign-out').addEventListener('click', async () => {
   await endCall('You signed out.');
+  window.google?.accounts?.id?.disableAutoSelect();
   window.clearInterval(queueTimer);
   window.clearInterval(presenceTimer);
   window.clearInterval(inboxTimer);
