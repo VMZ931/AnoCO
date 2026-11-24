@@ -122,7 +122,7 @@
 
           <label for="question">What would you like help thinking through?</label>
           <textarea id="question" name="question" rows="5" maxlength="1200" placeholder="Write a question you might ask a trusted adult or counselor." required></textarea>
-          <div class="field-meta"><span>Messages and replies stay in server memory until expiry, deletion, or service restart. A private link lets you return to your conversation.</span><span id="character-count">0 / 1200</span></div>
+          <div class="field-meta"><span>Messages and replies stay in server memory until a counselor closes the conversation or the service restarts. A private link lets you return to your conversation.</span><span id="character-count">0 / 1200</span></div>
 
           <button class="submit-button" id="message-submit" type="submit" disabled>Sending unavailable <span aria-hidden="true">&#8594;</span></button>
           <p class="staff-status" id="message-intake-status" role="status" aria-live="polite">Checking message service availability...</p>
@@ -134,13 +134,14 @@
         </form>
         <section class="student-thread" id="student-thread" aria-labelledby="student-thread-title" hidden>
           <h2 id="student-thread-title" tabindex="-1">Your counselor conversation</h2>
-          <p class="student-thread-note">Keep your private link safe. Anyone with the link can read and reply to this conversation. Replies are not monitored as an emergency service.</p>
+          <p class="student-thread-note">This conversation stays available until a counselor closes it or the service restarts. Keep the private link safe; anyone with it can read and reply. Replies are not monitored as an emergency service.</p>
           <p class="student-thread-topic" id="student-thread-topic"></p>
           <div class="student-thread-link" id="student-thread-link"></div>
           <ol class="student-thread-messages" id="student-thread-messages" aria-label="Conversation messages"></ol>
           <form class="student-thread-reply" id="student-thread-reply">
             <label for="student-thread-reply-text">Your reply</label>
-            <textarea id="student-thread-reply-text" name="reply" rows="4" maxlength="1200" required></textarea>
+            <textarea id="student-thread-reply-text" name="reply" rows="4" maxlength="1200" required aria-describedby="student-thread-reply-count"></textarea>
+            <span class="thread-reply-count" id="student-thread-reply-count">0 / 1200</span>
             <button class="submit-button" id="student-thread-reply-submit" type="submit">Send reply <span aria-hidden="true">&#8594;</span></button>
             <p class="staff-status" id="student-thread-status" role="status" aria-live="polite"></p>
           </form>

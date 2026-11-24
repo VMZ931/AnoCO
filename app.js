@@ -17,6 +17,7 @@ const threadMessages = document.querySelector('#student-thread-messages');
 const threadReplyForm = document.querySelector('#student-thread-reply');
 const threadReplyField = document.querySelector('#student-thread-reply-text');
 const threadReplyButton = document.querySelector('#student-thread-reply-submit');
+const threadReplyCount = document.querySelector('#student-thread-reply-count');
 const threadStatus = document.querySelector('#student-thread-status');
 const apiBase = (window.ANOCO_CALL_API || '').replace(/\/$/, '');
 let studentThreadToken = '';
@@ -47,7 +48,7 @@ async function checkMessageService() {
     if (config.messageIntakeEnabled) {
       messageSubmitButton.disabled = false;
       messageSubmitButton.innerHTML = 'Send to a counselor <span aria-hidden="true">&#8594;</span>';
-      messageIntakeStatus.textContent = `Only approved counselors can read messages. Messages are automatically deleted after ${config.messageRetentionHours} hours while a counselor is online. Replies are not guaranteed.`;
+      messageIntakeStatus.textContent = 'Only approved counselors can read messages. Your conversation stays available until a counselor closes it or the service restarts. Replies are not guaranteed.';
     } else {
       messageSubmitButton.disabled = true;
       messageIntakeStatus.textContent = 'Message sending is not enabled. Nothing you type is sent or saved.';
@@ -192,6 +193,10 @@ form.addEventListener('submit', async (event) => {
   }
 });
 
+threadReplyField.addEventListener('input', () => {
+  threadReplyCount.textContent = `${threadReplyField.value.length} / 1200`;
+});
+
 threadReplyForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   if (!threadReplyForm.reportValidity() || !studentThreadToken) return;
@@ -214,6 +219,7 @@ threadReplyForm.addEventListener('submit', async (event) => {
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(payload.error || 'Your reply could not be sent.');
     threadReplyField.value = '';
+    threadReplyCount.textContent = '0 / 1200';
     await refreshStudentThread();
     threadStatus.textContent = 'Your reply was sent. Counselor replies will appear here.';
   } catch (error) {

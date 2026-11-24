@@ -245,7 +245,7 @@ async function refreshInbox() {
       const deleteButton = document.createElement('button');
       deleteButton.className = 'sign-out-button';
       deleteButton.type = 'button';
-      deleteButton.textContent = 'Delete message';
+      deleteButton.textContent = 'Close conversation';
       deleteButton.addEventListener('click', () => deleteMessage(message.id, deleteButton));
       heading.append(topic, submittedAt);
       item.append(heading);
@@ -310,11 +310,11 @@ async function sendReply(messageId, textarea, button, status, conversation) {
 }
 
 async function deleteMessage(messageId, button) {
-  if (!window.confirm('Permanently delete this message from the inbox?')) return;
+  if (!window.confirm('Close this conversation and remove it from the student and counselor inbox?')) return;
   button.disabled = true;
   try {
     await api(`/staff/messages/${encodeURIComponent(messageId)}`, { method: 'DELETE' });
-    inboxStatus.textContent = 'Message deleted.';
+    inboxStatus.textContent = 'Conversation closed.';
     await refreshInbox();
   } catch (error) {
     inboxStatus.textContent = `Message could not be deleted: ${error.message}`;
@@ -431,10 +431,10 @@ async function initializeConsole() {
     }
     callServiceReady = Boolean(config.callConfigured);
     messageIntakeEnabled = Boolean(config.messageIntakeEnabled);
-    messageRetentionHours = config.messageRetentionHours;
+    messageRetentionHours = null;
     inboxRetention.textContent = messageIntakeEnabled
-      ? `Messages automatically expire after ${messageRetentionHours} hours while at least one counselor is online. The timer pauses when no counselor is online.`
-      : 'Message retention must be configured before submissions can be enabled.';
+      ? 'Conversations stay available until a counselor closes them or the service restarts.'
+      : 'Message intake must be configured before submissions can be enabled.';
 
     if (!window.google?.accounts?.id) {
       setStaffStatus('Google sign-in could not load. Refresh the page to try again.');

@@ -17,8 +17,6 @@ services:
         sync: false
       - key: MESSAGE_INTAKE_ENABLED
         value: "false"
-      - key: MESSAGE_RETENTION_HOURS
-        sync: false
       - key: LIVEKIT_URL
         sync: false
       - key: LIVEKIT_API_KEY

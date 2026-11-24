@@ -27,11 +27,7 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
-const messageRetentionHours = Number(process.env.MESSAGE_RETENTION_HOURS);
 const messageIntakeEnabled = process.env.MESSAGE_INTAKE_ENABLED === 'true'
-  && Number.isInteger(messageRetentionHours)
-  && messageRetentionHours >= 1
-  && messageRetentionHours <= 720
   && counselorSignInReady();
 const googleClient = new OAuth2Client(googleClientId);
 const sessions = new Map();
@@ -125,13 +121,13 @@ function requireService(res) {
 function requireStudentThread(req, res, next) {
   res.set('Cache-Control', 'no-store');
   const match = req.headers.authorization?.match(/^Bearer\s+([A-Za-z0-9_-]{43})$/);
-  if (!match) return res.status(404).json({ error: 'This private conversation is unavailable or has expired.' });
+  if (!match) return res.status(404).json({ error: 'This private conversation was closed or is no longer available.' });
 
   const tokenHash = createHash('sha256').update(match[1]).digest('hex');
   const messageId = studentThreadLookup.get(tokenHash);
   pruneMessages();
   const message = messageId ? messages.get(messageId) : null;
-  if (!message) return res.status(404).json({ error: 'This private conversation is unavailable or has expired.' });
+  if (!message) return res.status(404).json({ error: 'This private conversation was closed or is no longer available.' });
 
   req.studentMessage = message;
   return next();
@@ -230,7 +226,7 @@ app.get('/api/config', (_req, res) => {
     configured: counselorSignInReady(),
     callConfigured: serviceReady(),
     messageIntakeEnabled,
-    messageRetentionHours: messageIntakeEnabled ? messageRetentionHours : null,
+    messageRetentionHours: null,
     googleClientId,
   });
 });
@@ -505,16 +501,8 @@ setInterval(() => {
   }
 }, 15_000).unref();
 
-function pruneMessages(now = Date.now()) {
-  if (!messageIntakeEnabled) return;
-  advanceMessageRetention(now);
-  const retentionMs = messageRetentionHours * 60 * 60 * 1000;
-  for (const [id, message] of messages) {
-    if (message.retainedOnlineMs >= retentionMs) {
-      messages.delete(id);
-      studentThreadLookup.delete(message.threadTokenHash);
-    }
-  }
+function pruneMessages(_now = Date.now()) {
+  // Conversations stay in server memory until a counselor closes them or the service restarts.
 }
 
 function advanceMessageRetention(now) {

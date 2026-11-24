@@ -1,12 +1,12 @@
 # AnoCo student-message intake policy (DRAFT — NOT APPROVED)
 
-**Status:** Draft — approval and operational details must be verified before real student use. The form and counselor inbox now have a prototype implementation, but submissions are disabled by default. When enabled, messages exist only in the server process's memory, are deleted after the configured cumulative counselor-online retention time or by a counselor, and are lost on service restart or sleep. The timer pauses when no counselor presence is active. This is not durable storage or a guarantee of review.
+**Status:** Draft — approval and operational details must be verified before real student use. The form and counselor inbox now have a prototype implementation, but submissions are disabled by default. When enabled, messages exist only in the server process's memory, remain until a counselor closes the conversation, and are lost on service restart or sleep. This is not durable storage or a guarantee of review.
 
 ## Proposed student notice
 
 > **Before you send:** If this feature is approved and enabled, submitting will send the topic, message, and any optional contact details you choose to add to AnoCo's school counselor inbox. A name or preferred name, email address, phone number, and grade or section are optional. Only counselors with an approved school account can access the inbox. Please avoid unnecessary identifying details. Messages are not a crisis service and a response is not guaranteed to be immediate. If you or someone else may be in immediate danger, tell a trusted adult now or contact local emergency services.
 
-> **Private conversation link:** After sending, the website provides a private link to read counselor replies and send website replies. Anyone with the link can read and reply, so keep it private and do not use a shared device. The link is not sent by email or saved by AnoCo; save it yourself. Conversations are kept only in server memory and disappear at expiry, counselor deletion, or service restart. Replies may not be seen promptly and are not an emergency service.
+> **Private conversation link:** After sending, the website provides a private link to read counselor replies and send website replies. Anyone with the link can read and reply, so keep it private and do not use a shared device. The link is not sent by email or saved by AnoCo; save it yourself. Conversations are kept only in server memory and remain available until a counselor closes them or the service restarts. Replies may not be seen promptly and are not an emergency service.
 
 Before publication, the school must replace or confirm the notice, including the actual monitoring coverage, response expectations, retention period, and any legally required student/parent notice or consent.
 
@@ -19,7 +19,7 @@ Before publication, the school must replace or confirm the notice, including the
 - Use encrypted transport and school-approved hosting and access controls. Review security, backups, incident response, and vendor data handling before launch.
 - The message API uses the existing allowlisted counselor Google sign-in for inbox reading and deletion. The prototype message store is in memory, not durable, and is lost on server restart or sleep. It must not be treated as an approved production message store without a separate technical and security review.
 - Messages are separate from audio calls. They are not associated with a call and are not deleted when a call ends. A private-link holder can read and reply to the conversation on the website; there are no email notifications.
-- Treat the private link as a bearer credential. Anyone who obtains it can access the whole conversation until it expires or the counselor deletes it. The student must keep and protect the link; AnoCo does not verify the student's identity.
+- Treat the private link as a bearer credential. Anyone who obtains it can access the whole conversation until a counselor closes it or the service restarts. The student must keep and protect the link; AnoCo does not verify the student's identity.
 - The prototype limits replies to 1,200 characters per student reply, 2,000 characters per counselor reply, and 50 total conversation entries. Website replies are rate-limited per private link; the school must approve these limits and the operational implications.
 
 ### Monitoring and safeguarding
@@ -32,7 +32,7 @@ Before publication, the school must replace or confirm the notice, including the
 
 ### Retention and deletion
 
-- Counselors can delete messages from the inbox. The prototype also removes messages after the configured `MESSAGE_RETENTION_HOURS` of cumulative time while at least one counselor presence is active (1–720 hours). The timer pauses when no counselor is online; it does not measure wall-clock time from submission.
+- Counselors can close conversations from the inbox. Closing removes the conversation and private thread credential. Conversations are not removed by elapsed time and are lost if the server restarts or sleeps.
 - **School decision required before launch:** approve the maximum retention period, identify who checks and enforces deletion, and explain whether hosting-provider records can retain content after deletion. The in-memory prototype cannot enforce deletion from provider records or recover data after a restart.
 - Confirm how student requests for deletion, access, or correction will be handled, where legally applicable.
 

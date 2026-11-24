@@ -156,6 +156,7 @@ h2 { margin: 0; font-size: 30px; font-weight: 600; line-height: 1.2; }
 .student-thread-reply { display: grid; gap: 9px; }
 .student-thread-reply label { font-size: 12px; font-weight: 700; }
 .student-thread-reply textarea { width: 100%; min-height: 96px; padding: 12px; border: 1px solid #cedbd0; border-radius: 3px; color: var(--ink); background: white; font: inherit; font-size: 13px; line-height: 1.6; resize: vertical; }
+.thread-reply-count { justify-self: end; color: var(--muted); font-size: 11px; }
 .student-thread-reply .submit-button { justify-content: center; gap: 12px; }
 .student-thread-reply button:disabled { cursor: wait; opacity: .68; }
 .counselor-thread { margin: 8px 0 14px; }
